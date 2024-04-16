@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="../cs/index.css" rel="stylesheet">
+    <script src="../js/index.js" defer> </script>
+    <script src="../js/init.js" defer> </script>
+    <script src="../js/hk-old/type.js" defer> </script>
+    <script src="../js/hk-old/modeParser.js" defer> </script>
+    <script src="../js/hk-old/table.js" defer> </script>
+    <script src="../js/hk-old/search.js" defer> </script>
+    <script src="../js/ws.js" defer> </script>
+</head>
+
+<body>
+    <div class="">
+        <div class="m-3">
+            <input type="file" class="read" accept=".txt" multiple>
+        </div>
+
+        <div class="d-flex m-3">
+            <button type="button" class="btn btn-primary m-3" data-bs-toggle="modal" data-bs-target="#Modal">
+                欄位顯示
+            </button>
+
+            <button type="button" class="btn btn-primary m-3 add-search">
+                新增搜尋條件
+            </button>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1">最新幾筆</span>
+                <input type="text" class="form-control count w-20" value=100>
+            </div>
+        </div>
+
+        <div class="d-flex m-3">
+
+            <button type="button" class="btn btn-primary  m-3">
+                心跳封包
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3">
+                初始化名單資料
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3">
+                初始化房間設定資料
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3">
+                讀取紀錄
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3">
+                讀取電表紀錄
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3">
+                讀取設備狀態
+            </button>
+
+        </div>
+
+        <div class="search d-flex m-3">
+            <div class="div-condition d-flex"></div>
+            <button type="button" class="btn btn-primary btn-search m-3">
+                搜尋
+            </button>
+
+        </div>
+
+        <table class="table table-striped text-center text-nowrap">
+            <thead class="thead">
+            </thead>
+            <tbody class="tbody"></tbody>
+        </table>
+
+        <div>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+        </div>
+
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="Modal" tabindex="-1" aria-labelledby="Modal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">打勾顯示</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
