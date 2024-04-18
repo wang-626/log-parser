@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const { exec } = require('child_process');
 const path = require('path');
-const fs = require('node:fs');
 
 require('dotenv').config();
 const app = express();
@@ -47,4 +46,4 @@ app.post('/command', (req, res) => {
   });
 });
 
-app.listen(3000);
+app.listen(process.env.WEB_PORT);

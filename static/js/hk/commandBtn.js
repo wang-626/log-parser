@@ -1,5 +1,5 @@
 const command_btns = document.querySelectorAll(".command_btn");
-const PORT = 3000
+const PORT = location.port || 3000
 command_btns.forEach((btn) => {
   btn.addEventListener("click", () => {
     fetch(`http://localhost:${PORT}/command`, {
