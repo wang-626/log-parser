@@ -27,7 +27,7 @@ app.get('/hk-old', (req, res) => {
 app.post('/command', (req, res) => {
 
   const file = req.body.file;
-  const command = process.env.PYTHON_FILE_PATH + file + " " + process.env.COM_PORT
+  const command = process.env.PYTHON_COMMAND + file + " " + process.env.COM_PORT
 
   exec(command , (error, stdout, stderr) => {
     if (error) {
