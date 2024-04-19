@@ -158,41 +158,87 @@ class Mode17Parser extends ModeParser {
 }
 
 /**
- * 設定房間名單單個
+ * 設定房間名單
  */
-class Mode19Parser extends ModeParser {
+class Mode18Parser extends ModeParser {
   /**
-   * - 7以後為住宿者資料共5個每個佔9byte，以8為範例
-   * - 7為模式
-   * - 8-11為UID
-   * - 12-15為餘額
+   * - 8以後為住宿者資料共5個每個佔9byte，以8為範例
+   * - 8為模式
+   * - 9-12為UID
+   * - 13-16為餘額
   */
-  userInfo() {
-    let html = `<table class="table table-success table-striped align-self-start">
-    <thead><th>送電狀態</th><th>Byte</th><th>UID</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
-    const mode = userModeHash[parseInt(this.bytes[7], 10)]
-    const modeByte = 7
-    const uid = this.Bidcard_to_str(this.bytes.slice(8, 12))
-    const uidByte = `${8} - ${11}`
-    const balance = this.Bbalance_to_str(this.bytes.slice(12, 17))
-    const balanceByte = `${12} - ${15}`
-    html += `<tr><td>${mode}</td><td>${modeByte}</td><td>${uid}</td><td>${uidByte}</td><td>${balance}</td><td>${balanceByte}</td></tr>`
+  roomInfo() {
+    let html = `<table class="table table-success table-striped">
+    <thead><tr><th>送電狀態</th><th>Byte</th><th>費率</th><th>Byte</th><th>人數</th><th>Byte</th></tr><tbody>`
+    let curr = 4
+    for (let i = 0; i < 11; i++) {
+      const mode = userModeHash[parseInt(this.bytes[curr], 10)]
+      const modeByte = curr
+      curr += 1
+      const price = parseInt(this.bytes[curr], 10)
+      const priceByte = curr
+      curr += 1
+      const memberCount = parseInt(this.bytes[curr], 10)
+      const memberCountByte = curr
+      curr += 1
+      html += `<tr><td>${mode}</td><td>${modeByte}</td><td>${price}</td><td>${priceByte}</td><td>${memberCount}</td><td>${memberCountByte}</td></tr>`
+    }
+    html += `<tbody></table>`
+    html += `<table class="table table-success table-striped">
+    <thead><tr><th>送電狀態</th><th>Byte</th><th>費率</th><th>Byte</th><th>人數</th><th>Byte</th></tr><tbody>`
+    for (let i = 0; i < 11; i++) {
+      const mode = userModeHash[parseInt(this.bytes[curr], 10)]
+      const modeByte = curr
+      curr += 1
+      const price = parseInt(this.bytes[curr], 10)
+      const priceByte = curr
+      curr += 1
+      const memberCount = parseInt(this.bytes[curr], 10)
+      const memberCountByte = curr
+      curr += 1
+      html += `<tr><td>${mode}</td><td>${modeByte}</td><td>${price}</td><td>${priceByte}</td><td>${memberCount}</td><td>${memberCountByte}</td></tr>`
+    }
     html += `<tbody></table>`
     return html
   }
 
   createHtml() {
+    const roomMode = systemHash[parseInt(this.bytes[5], 10)]
+    const price = this.price_format(this.bytes[6])
+    const memberCount = systemHash[parseInt(this.bytes[7], 10)] || systemHash['error'](parseInt(this.bytes[9], 10))
+    const byte3Dec = parseInt(this.bytes[3], 10);
     const byte4Dec = parseInt(this.bytes[4], 10);
-    const byte5Dec = parseInt(this.bytes[5], 10);
-    const byte6Dec = parseInt(this.bytes[6], 10);
+    const byte7Dec = parseInt(this.bytes[7], 10);
+    const byte8Dec = parseInt(this.bytes[8], 10);
 
     let html = `
       <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
-      <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p>Meter ID : ${byte4Dec}</p><p> 房間人數(byte5) : ${byte5Dec}</p><p> 封包號碼(byte6) : ${byte6Dec}</p>`)}
+      <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p>Meter ID : ${byte3Dec}</p><p> 封包號碼(byte4) : ${byte4Dec}</p><p> 房間人數(byte7) : ${byte7Dec}</p>
+      <p> 計費人數(byte8) : ${byte8Dec}</p>`)}
       `
 
-    html += this.userInfo()
+    html += this.roomInfo()
+    html += `</div></div> `
+    return html
+  }
+}
+
+/**
+ * 設定房間名單單個
+ */
+class Mode19Parser extends ModeParser {
+
+  createHtml() {
+    const byte3Dec = parseInt(this.bytes[3], 10);
+    const byte4Dec = parseInt(this.bytes[4], 10);
+
+    let html = `
+      <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
+      <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
+      <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> 上次已讀紀錄數量(byte3) : ${byte3Dec}</p><p> 驗證(byte4) : ${byte4Dec}</p>`)}
+      `
+
     html += `</div></div> `
     return html
   }
@@ -810,6 +856,7 @@ class Mode57Parser extends ModeParser {
 
 let modeParser = {
   '17': Mode17Parser,
+  '18': Mode18Parser,
   '19': Mode19Parser,
   '20': Mode20Parser,
   '48': Mode48Parser,
