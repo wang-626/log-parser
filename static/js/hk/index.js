@@ -72,6 +72,9 @@ const addTable = (data) => {
           <br>
           <button class="btn btn-primary parser-btn" type="button" id="parser-btn-${textList[0]}">
           解析
+          </button>
+          <button class="btn btn-primary dec-btn" type="button" id="dec-btn-${textList[0]}">
+          hex
           </button></td>`
         } else {
           html += `<td class='t${i}'>${v}</td> `
@@ -132,6 +135,7 @@ btnSearch.addEventListener('click', (e) => {
   let filterData = dataFilter(byteConditionHash)
   addTable(filterData)
   addParsesEvent()
+  addDecEvent()
 })
 
 
@@ -178,6 +182,8 @@ const addParsesEvent = () => {
     })
   })
 
+
+
   const closeBtns = document.querySelectorAll('.btn-parser-close')
   closeBtns.forEach((closeBtn) => {
     closeBtn.addEventListener('click', (e) => {
@@ -188,5 +194,31 @@ const addParsesEvent = () => {
   const parses = document.querySelectorAll('.parser')
   parses.forEach((parse) => {
     parse.addEventListener('dragstart', startDragging);
+  })
+}
+
+const addDecEvent = () => {
+  const btnnDecs = document.querySelectorAll('.dec-btn')
+  btnnDecs.forEach((btnDec) => {
+    let isDec = true 
+    btnDec.addEventListener('click', (e) => {
+      tds = btnDec.parentNode.parentElement.querySelectorAll("td")
+      for (i = modeIndex; i < dateLen; i++) {
+        td = tds[i]
+        if(isDec){
+          td.textContent = Number(td.textContent).toString(16).toUpperCase()
+        }
+        else{
+          td.textContent = parseInt(td.textContent, 16).toString()
+        }
+       
+      }
+      isDec = !isDec
+      if(isDec){
+        btnDec.textContent="DEC"
+      }else{
+        btnDec.textContent="hex"
+      }
+    })
   })
 }

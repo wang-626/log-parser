@@ -116,9 +116,7 @@ const ctrRspSystemInfo = {
 
 const ctrChangeRoomData = {
   cmd:2,
-  onAllMode:3,
-  systemMode:4,
-  setCount:5,
+  systemMode:3,
 }
 
 const ctrChangeUserData = {
@@ -127,4 +125,4 @@ const ctrChangeUserData = {
 
 
 const maxRoom = 22
-const dateLen = 100
+const dateLen = 102

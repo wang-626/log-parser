@@ -8,6 +8,7 @@ socket.onmessage = function (event) {
       initialData.push(str_list)
       addTable(initialData)
       addParsesEvent()
+      addDecEvent()
     }
   } catch (error) {
     console.log("error:", error);

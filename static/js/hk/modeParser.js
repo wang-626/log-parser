@@ -2,6 +2,7 @@ const byteToBitStr = (byte)=>{
   return Number(byte).toString(2).padStart(8, '0').replace(/(.{4})(.{4})/, "$1 $2")
 }
 
+
 class ModeParser {
   constructor(textList) {
     this.textList = textList;
@@ -88,12 +89,14 @@ class ModeParser {
    * @param {Array} Bbalance 陣列4個
    */
   Bbalance_to_str(Bbalance) {
-    let balance = 0
-    balance = balance | Number(Bbalance[0]) << 24
-    balance = balance | Number(Bbalance[1]) << 16
-    balance = balance | Number(Bbalance[2]) << 8
-    balance = balance | Number(Bbalance[3])
-    return balance / 1000
+    let bytes = new Uint8Array(Bbalance)
+
+    // 使用 DataView 對字節數組進行解析並轉換為浮點數
+    let dataView = new DataView(bytes.buffer);
+    let float = dataView.getFloat32(0, true)
+    console.log(typeof(float));
+    
+    return float.toFixed(2);
   }
 
 
@@ -116,7 +119,7 @@ class Mode16Parser extends ModeParser {
     const byte4Dec = parseInt(this.bytes[4], 10);
 
     let html = `
-      <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
+      <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
       <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> 上次已讀紀錄數量(byte3) : ${byte3Dec}</p><p> 驗證(byte4) : ${byte4Dec}</p>`)}
       `
@@ -138,22 +141,22 @@ class Mode17Parser extends ModeParser {
   */
   userInfo() {
     let html = `<table class="table table-success table-striped">
-    <thead><tr><th>送電狀態</th><th>Byte</th><th>卡號</th><th>Byte</th><th>學號</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
+    <thead><tr><th>送電狀態</th><th>Byte</th><th>學號</th><th>Byte</th><th>卡號</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
     let curr = 10
     for (let i = 0; i < 6; i++) {
       const mode = userModeHash[parseInt(this.bytes[curr], 10)]
       const modeByte = curr
       curr += 1
-      const uid = this.Bidcard_to_str(this.bytes.slice(curr, curr + 4))
-      const uidByte = `${curr} - ${curr + 3}`
-      curr += 4
       const sid = this.Bstudent_id_to_str(this.bytes.slice(curr, curr + 4))
       const sidByte = `${curr} - ${curr + 3}`
+      curr += 4
+      const uid = this.Bidcard_to_str(this.bytes.slice(curr, curr + 4))
+      const uidByte = `${curr} - ${curr + 3}`
       curr += 4
       const balance = this.Bbalance_to_str(this.bytes.slice(curr, curr + 4))
       const balanceByte = `${curr} - ${curr + 3}`
       curr += 4
-      html += `<tr><td>${mode}</td><td>${modeByte}</td><td>${uid}</td><td>${uidByte}</td><td>${sid}</td><td>${sidByte}</td><td>${balance}</td><td>${balanceByte}</td></tr>`
+      html += `<tr><td>${mode}</td><td>${modeByte}</td><td>${sid}</td><td>${sidByte}</td><td>${uid}</td><td>${uidByte}</td><td>${balance}</td><td>${balanceByte}</td></tr>`
     }
     html += `<tbody></table>`
     return html
@@ -204,40 +207,41 @@ class Mode18Parser extends ModeParser {
   */
   roomInfo() {
     let html = `<table class="table table-success table-striped">
-    <thead><tr><th>MeterID *1B(全部設定0xFF)</th><th>Byte</th><th>模式</th><th>Byte</th><th>費率</th><th>Byte</th><th>房間人數</th><th>Byte</th><th>房間扣款人數</th><th>Byte</th></tr><tbody>`
-    let count = this.bytes[ctrChangeRoomData.setCount]
-    let curr = 6
-    for (let i = 0; i < count; i++) {
-      const memterId = parseInt(this.bytes[curr], 10)
-      const memterIdByte = curr
-      curr += 1
+    <thead><tr><th>memter ID</th><th>模式</th><th>Byte</th><th>費率</th><th>Byte</th></tr><tbody>`
+    let curr = 4
+    for (let i = 0; i < 12; i++) {
       const mode = parseInt(this.bytes[curr], 10)
       const modeByte = curr
       curr += 1
-      const price = parseInt(this.bytes[curr], 10) /10
+      const price = parseInt(this.bytes[curr], 10) / 10
       const priceByte = curr
       curr += 1
-      const memberCount = parseInt(this.bytes[curr], 10)
-      const memberCountByte = curr
-      curr += 1
-      const chargeMemberCount = parseInt(this.bytes[curr], 10)
-      const chargeMemberCountByte = curr
-      curr += 1
-      html += `<tr><td>${memterId}</td><td>${memterIdByte}</td><td>${mode}</td><td>${modeByte}</td><td>${price}</td><td>${priceByte}</td><td>${memberCount}</td><td>${memberCountByte}</td><td>${chargeMemberCount}</td><td>${chargeMemberCountByte}</td></tr>`
+      html += `<tr><td>${i+1}</td><td>${mode}</td><td>${modeByte}</td><td>${price}</td><td>${priceByte}</td></tr>`
     }
     html += `<tbody></table>`
+    html += `<div class="ms-3"><table class="table table-success table-striped">
+    <thead><tr><th>memter ID</th><th>模式</th><th>Byte</th><th>費率</th><th>Byte</th></tr><tbody>`
+    for (let i = 0; i < 11; i++) {
+      const mode = parseInt(this.bytes[curr], 10)
+      const modeByte = curr
+      curr += 1
+      const price = parseInt(this.bytes[curr], 10) / 10
+      const priceByte = curr
+      curr += 1
+      html += `<tr><td>${12+i}</td><td>${mode}</td><td>${modeByte}</td><td>${price}</td><td>${priceByte}</td></tr>`
+    }
+
+    html += `<tbody></table></div>`
     return html
   }
 
   createHtml() {
-    const onAllMode = parseInt(this.bytes[ctrChangeRoomData.onAllMode], 10);
     const systemModeMode = parseInt(this.bytes[ctrChangeRoomData.systemMode], 10);
-    const setCount = parseInt(this.bytes[ctrChangeRoomData.setCount], 10);
 
     let html = `
       <div class="card position-absolute d-flex parser d-none " draggable="true" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
-      <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> 單間多間設定(byte${ctrChangeRoomData.onAllMode}) : ${onAllMode}</p><p> 系統模式(byte${ctrChangeRoomData.systemMode}) : ${systemModeMode}</p><p> 設定幾筆(byte${ctrChangeRoomData.setCount}) : ${setCount}</p>`)}
+      <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> 系統模式(byte${ctrChangeRoomData.systemMode}) : ${systemModeMode}</p>`)}
       `
 
     html += this.roomInfo()
@@ -257,7 +261,7 @@ class Mode20Parser extends ModeParser {
   createHtml() {
 
     let html = `
-        <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
+        <div class="card position-absolute d-flex parser d-none" draggable="true"  id="parser${this.textList[0]}">
         <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
         <div class="card-body d-flex text-nowrap">${this.titleHtml()}
         `
@@ -273,7 +277,7 @@ class Mode21Parser extends ModeParser {
   createHtml() {
 
     let html = `
-        <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
+        <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
         <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
         <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> meter ID:(byte${this.textList[3]}`)}
         `
@@ -300,11 +304,11 @@ class Mode19Parser extends ModeParser {
       const chargeMemberCount = parseInt(this.bytes[curr], 10)
       const chargeMemberCountByte = curr
       curr += 1
-      const mode = userModeHash[parseInt(this.bytes[curr], 10)]
-      const modeByte = curr
-      curr += 1
       const memberIndex = parseInt(this.bytes[curr], 10)
       const memberIndexByte = curr
+      curr += 1
+      const mode = userModeHash[parseInt(this.bytes[curr], 10)]
+      const modeByte = curr
       curr += 1
       const balance = this.Bbalance_to_str(this.bytes.slice(curr, curr + 4))
       const balanceByte = `${curr} - ${curr + 3}`
@@ -319,7 +323,7 @@ class Mode19Parser extends ModeParser {
     const setCount = parseInt(this.bytes[ctrChangeUserData.setCount], 10);
 
     let html = `
-      <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
+      <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
       <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> 設定幾筆(byte${ctrChangeRoomData.setCount}) : ${setCount}</p>`)}
       `
@@ -560,7 +564,7 @@ class Mode50Parser extends ModeParser {
     const byte5Dec = parseInt(this.bytes[5], 10);
 
     let html = `
-      <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
+      <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
       <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p>Meter ID : ${byte4Dec}</p><p> 封包號碼(byte5) : ${byte5Dec}</p>`)}
       `
@@ -647,7 +651,7 @@ class Mode51Parser extends ModeParser {
     const byte4Dec = parseInt(this.bytes[4], 10);
 
     let html = `
-        <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
+        <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
         <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
         <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p>MeterID(Byte4) : ${byte4Dec}</p>`)}
         `
@@ -709,7 +713,7 @@ class Mode52Parser extends ModeParser {
     const byte5Dec = parseInt(this.bytes[5], 10);
 
     let html = `
-        <div class="card position-absolute d-flex parser d-none" id="parser${this.textList[0]}">
+        <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
         <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
         <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p>房號ID(byte4) : ${byte4Dec}</p><p>學生ID(byte5) : ${byte5Dec}</p>`)}
         `
