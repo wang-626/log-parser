@@ -50,7 +50,7 @@ const addTable = (data) => {
         }
       })
       html += '</tr><tr>'
-      html += `<td colspan="58" class='hiddenRow'>${parse.createHtml()}</td>`
+      html += `<td colspan="${dateLen}" class='hiddenRow'>${parse.createHtml()}</td>`
       html += '</tr>'
     } else {
       html += '<tr>'

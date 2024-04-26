@@ -108,3 +108,4 @@ const systemHash = {
 }
 
 const maxRoom = 22
+const dataLen = 58

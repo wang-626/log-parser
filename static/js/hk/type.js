@@ -1,35 +1,23 @@
 const byte2Name = {
   16: '確認系統Alive',
-  17: 'SET房間參數',
-  18: 'SET房間模式費率(整層)',
-  19: 'GET進出紀錄',
-  20: 'GET全部房間電表度數',
+  17: '房間初始化',
+  18: 'SET房間模式費率',
+  19: '改變USER資料',
+  20: 'GET電表度數',
   21: 'GET單個電表資訊',
-  22: 'GET RECORD',
-  23: 'GET USER_DATA',
-  24: 'METER_RESET',
-  25: 'ADD_VALUE',
-  26: 'DEC_VALUE',
-  27: 'POWER_ON',
-  28: 'POWER_OFF',
-  29: 'SYS_SW',
-  30: 'GET_ALL_ROOM_MODE',
   //上面傳送下面回應
-  "2A": 'RSP USER INFO',
-  48: 'RSP ACK',
-  49: 'RSP Alive',
+  48: 'RSP Alive ACK',
+  49: 'CTR_RSP_SYSTEM_INFO',
   50: 'RSP 讀取所有房間電表度數',
   51: 'RSP 單個電表詳細資料',
-  52: 'RSP 用電紀錄',
-  53: 'RSP 房間名單',
-  57: 'RSP 全部房間模式',
+  52: 'RSP 重新RESET',
 }
 
 
 const byteName = {
   0: { name: '時間' },
-  1: { name: 'mode', selectName: byte2Name },
-  2: { name: 'CenterID' },
+  1: { name: 'CenterID' },
+  2: { name: 'mode', selectName: byte2Name },
   3: { name: 'meterID' },
   4: 4,
   5: 5,
@@ -107,4 +95,36 @@ const systemHash = {
   'error': (byte) => { return `<p class="m-0 text-danger">錯誤參數 : ${String(byte)}</p>` }
 }
 
+const roomInit = {
+  meterId: 3,
+  packageIndex: 4,
+  systemMode: 5,
+  roomMode: 6,
+  roomPrice: 7,
+  memberCount: 8,
+  roomFeeDeductors: 9,
+}
+
+const ctrRspSystemInfo = {
+  cmd: 2,
+  readerDeviceError: 3,
+  powerMeterDeviceError:6,
+  meterDeviceError:9,
+  newRecordCounter: 12,
+  recordReadPoint: 13,
+}
+
+const ctrChangeRoomData = {
+  cmd:2,
+  onAllMode:3,
+  systemMode:4,
+  setCount:5,
+}
+
+const ctrChangeUserData = {
+  setCount:3,
+}
+
+
 const maxRoom = 22
+const dateLen = 100

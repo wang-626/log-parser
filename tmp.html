@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horizontal Scroll with Sticky Div</title>
+<style>
+.container {
+  width: 100%;
+  overflow-x: auto; /* 創建水平滾動 */
+  white-space: nowrap; /* 避免子元素折行 */
+}
+
+.sticky-div {
+  position: sticky;
+  left: 0;
+  top: 0;
+  background-color: lightblue;
+  padding: 10px;
+  margin-right: 10px; /* 為了美觀，添加右邊的 margin */
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="sticky-div">Sticky Div</div>
+  <!-- 添加更多子元素以創建水平滾動 -->
+  <div>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+  <div>Phasellus eget odio at nulla fermentum laoreet.</div>
+  <div>Maecenas nec turpis in massa fermentum posuere.</div>
+  <div>Nullam sollicitudin lorem eget quam pretium, ut dictum felis rhoncus.</div>
+  <!-- 這裡添加更多子元素 -->
+</div>
+
+</body>
+</html>

@@ -11,9 +11,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link href="../cs/index.css" rel="stylesheet">
+    <script src="../js/hk/type.js" defer> </script>
+    <script src="../js/hk/move.js" defer> </script>
     <script src="../js/hk/index.js" defer> </script>
     <script src="../js/init.js" defer> </script>
-    <script src="../js/hk/type.js" defer> </script>
     <script src="../js/hk/modeParser.js" defer> </script>
     <script src="../js/hk/table.js" defer> </script>
     <script src="../js/hk/search.js" defer> </script>
@@ -42,30 +43,33 @@
         </div>
 
         <div class="d-flex m-3">
-
-            <!-- <button type="button" class="btn btn-primary  m-3 command_btn">
-                心跳封包
-            </button> -->
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_LayerRoomAccess">
+                Alive
+            </button>
 
             <button type="button" class="btn btn-primary  m-3 command_btn" id="test_SingleRoomInitialization">
                 初始化名單房間設定資料
             </button>
 
-            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_ChangeLayerRoomSet">
-                初始化整層房間費率模式
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_ChangeMemberInfo">
+                修改USER資料
             </button>
 
-            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_LayerRoomAccess">
-                讀取紀錄
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_ChangeRoomSet">
+                設定房間(單)模式/費率
             </button>
 
-            <!-- <button type="button" class="btn btn-primary  m-3 command_btn">
-                讀取電表紀錄
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_ChangeRoomSet -a">
+                設定房間(全部)模式/費率
             </button>
 
-            <button type="button" class="btn btn-primary  m-3 command_btn">
-                讀取設備狀態
-            </button> -->
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_LayerRoomDegree">
+                整層電錶值
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_RoomPowerMeterData">
+                單個電錶詳細值
+            </button>
 
         </div>
 

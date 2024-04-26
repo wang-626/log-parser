@@ -4,7 +4,23 @@ const tableChecks = document.querySelectorAll('.table-check')
 const btnSearch = document.querySelector('.btn-search')
 const countInput = document.querySelector('.count');
 let initialData = []
-const modeIndex = 3
+
+let modeIndex = null;
+for (const key in byteName) {
+  if (byteName.hasOwnProperty(key)) {
+    const element = byteName[key];
+    if (element.name === 'mode') {
+      modeIndex = Number(key) + 2;
+      break;
+    }
+  }
+}
+
+if (modeIndex == null) {
+  console.log("not found modeIndex");
+}
+
+
 
 readInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
@@ -21,19 +37,17 @@ readInput.addEventListener('change', (e) => {
 const textSplit = (text) => {
   texts = text.trim().split(/\r?\n/)
   texts = texts.map((line, i) => {
-    textList = [i + 1, line.slice(0, 23)]
-    if (line.includes(',')){
-      textList = textList.concat(line.slice(23).split(', '))
-    }else{
-      textList = textList.concat(line.slice(23).split(' '))
+    const parts = line.split(" : ");
+    textList = [i + 1, parts[0]]
+    if (line.includes(',')) {
+      textList = textList.concat(parts[1].split(', '))
+    } else {
+      textList = textList.concat(parts[1].split(' '))
     }
     textList[4] = textList[4] + '<br>' + (byte2Name[textList[4]] || "")
     return textList
   })
 
-  // texts = texts.filter((line) => {
-  //   return line[2] === '85' && line[57] === '10'
-  // })
   return texts
 }
 
@@ -42,13 +56,12 @@ const addTable = (data) => {
   let count = -Number(countInput.value)
   data.slice(count).forEach(textList => {
     let modeId = 0
-    if (typeof(textList[modeIndex])==String){
+    if (typeof (textList[modeIndex]) == String) {
       modeId = textList[modeIndex].slice(0, 2)
     }
-    else{
+    else {
       modeId = String(textList[modeIndex]).slice(0, 2)
     }
-    console.log(modeId);
     if (modeParser[modeId] !== undefined) {
       const parse = new modeParser[modeId](textList)
       html += '<tr>'
@@ -65,7 +78,7 @@ const addTable = (data) => {
         }
       })
       html += '</tr><tr>'
-      html += `<td colspan="58" class='hiddenRow'>${parse.createHtml()}</td>`
+      html += `<td colspan="${dateLen}" class='hiddenRow'>${parse.createHtml()}</td>`
       html += '</tr>'
     } else {
       html += '<tr>'
@@ -102,13 +115,20 @@ btnSearch.addEventListener('click', (e) => {
     const conditionId = condition.id.slice(17)
     const conditionValue = document.querySelector(`#condition-value-${conditionId}`)
     let value = conditionValue.value.split(",") || [conditionValue.value]
-    if (byteConditionHash[condition.value]) {
-      byteConditionHash[condition.value] = byteConditionHash[condition.value].concat(value)
-    } else {
-      byteConditionHash[condition.value] = value
+
+    if (!byteConditionHash[condition.value]) {
+      byteConditionHash[condition.value] = { "isEqual": [], "isNotEqual": [] }
     }
+    value.forEach((v) => {
+      if (v.includes("!")) {
+        byteConditionHash[condition.value]["isNotEqual"].push(v.slice(1))
+      } else {
+        byteConditionHash[condition.value]["isEqual"].push(v)
+      }
+    })
 
   })
+
   let filterData = dataFilter(byteConditionHash)
   addTable(filterData)
   addParsesEvent()
@@ -125,7 +145,12 @@ const dataFilter = (hash) => {
       const byteIndex = keysList[i]
       const DateByte = text[Number(byteIndex) + 2].slice(0, 2)
 
-      if (!hash[byteIndex].includes(DateByte)) {
+      if ((hash[byteIndex]["isEqual"].length !== 0) && !hash[byteIndex]["isEqual"].includes(DateByte)) {
+        result = false
+        break
+      }
+
+      if (hash[byteIndex]["isNotEqual"].includes(DateByte)) {
         result = false
         break
       }
@@ -158,5 +183,10 @@ const addParsesEvent = () => {
     closeBtn.addEventListener('click', (e) => {
       closeBtn.parentNode.classList.add('d-none')
     })
+  })
+
+  const parses = document.querySelectorAll('.parser')
+  parses.forEach((parse) => {
+    parse.addEventListener('dragstart', startDragging);
   })
 }
