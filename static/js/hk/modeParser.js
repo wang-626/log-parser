@@ -94,7 +94,6 @@ class ModeParser {
     // 使用 DataView 對字節數組進行解析並轉換為浮點數
     let dataView = new DataView(bytes.buffer);
     let float = dataView.getFloat32(0, true)
-    console.log(typeof(float));
     
     return float.toFixed(2);
   }
@@ -251,43 +250,6 @@ class Mode18Parser extends ModeParser {
 }
 
 
-
-
-/**
- * GET全部房間電表度數
- */
-class Mode20Parser extends ModeParser {
-
-  createHtml() {
-
-    let html = `
-        <div class="card position-absolute d-flex parser d-none" draggable="true"  id="parser${this.textList[0]}">
-        <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
-        <div class="card-body d-flex text-nowrap">${this.titleHtml()}
-        `
-    return html
-  }
-}
-
-/**
- * GET單個電表
- */
-class Mode21Parser extends ModeParser {
-
-  createHtml() {
-
-    let html = `
-        <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
-        <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
-        <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> meter ID:(byte${this.textList[3]}`)}
-        `
-    return html
-  }
-}
-
-
-
-
 /**
  * 設定USER 模式/餘額
  */
@@ -332,6 +294,44 @@ class Mode19Parser extends ModeParser {
     return html
   }
 }
+
+
+
+/**
+ * GET全部房間電表度數
+ */
+class Mode20Parser extends ModeParser {
+
+  createHtml() {
+
+    let html = `
+        <div class="card position-absolute d-flex parser d-none" draggable="true"  id="parser${this.textList[0]}">
+        <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
+        <div class="card-body d-flex text-nowrap">${this.titleHtml()}
+        `
+    return html
+  }
+}
+
+/**
+ * GET單個電表
+ */
+class Mode21Parser extends ModeParser {
+
+  createHtml() {
+
+    let html = `
+        <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
+        <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
+        <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> meter ID:(byte${this.textList[3]})`)}
+        `
+    return html
+  }
+}
+
+
+
+
 
 
 /**
@@ -728,7 +728,68 @@ class Mode52Parser extends ModeParser {
   }
 }
 
+/**
+ * 房間用戶資料
+ */
+class Mode53Parser extends ModeParser {
+  /**
+   * - 10以後為住宿者資料共5個每個佔9byte，以8為範例
+   * - 8為模式
+   * - 9-12為UID
+   * - 13-16為餘額
+  */
+  userInfo() {
+    let html = `<table class="table table-success table-striped">
+    <thead><tr><th>送電狀態</th><th>Byte</th><th>學號</th><th>Byte</th><th>卡號</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
+    let curr = 10
+    for (let i = 0; i < 6; i++) {
+      const mode = userModeHash[parseInt(this.bytes[curr], 10)]
+      const modeByte = curr
+      curr += 1
+      const sid = this.Bstudent_id_to_str(this.bytes.slice(curr, curr + 4))
+      const sidByte = `${curr} - ${curr + 3}`
+      curr += 4
+      const uid = this.Bidcard_to_str(this.bytes.slice(curr, curr + 4))
+      const uidByte = `${curr} - ${curr + 3}`
+      curr += 4
+      const balance = this.Bbalance_to_str(this.bytes.slice(curr, curr + 4))
+      const balanceByte = `${curr} - ${curr + 3}`
+      curr += 4
+      html += `<tr><td>${mode}</td><td>${modeByte}</td><td>${sid}</td><td>${sidByte}</td><td>${uid}</td><td>${uidByte}</td><td>${balance}</td><td>${balanceByte}</td></tr>`
+    }
+    html += `<tbody></table>`
+    return html
+  }
 
+  createHtml() {
+    const meterId = parseInt(this.bytes[roomInit.meterId], 10);
+    const packageIndex = parseInt(this.bytes[roomInit.packageIndex], 10);
+    const systemMode = parseInt(this.bytes[roomInit.systemMode], 10);
+    const roomMode = parseInt(this.bytes[roomInit.roomMode], 10);
+    const roomPrice = parseInt(this.bytes[roomInit.roomPrice], 10);
+    const memberCount = parseInt(this.bytes[roomInit.memberCount], 10);
+    const roomFeeDeductors = parseInt(this.bytes[roomInit.roomFeeDeductors], 10);
+
+
+    let html = `
+      <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
+      <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
+      <div class="card-body d-flex text-nowrap">
+      ${this.titleHtml(`
+      <p>Meter ID : ${meterId}</p>
+      <p> 封包號碼(byte${roomInit.packageIndex}) : ${packageIndex}</p>
+      <p> 系統模式(byte${roomInit.systemMode}) : ${systemMode}</p>
+      <p> 房間模式(byte${roomInit.roomMode}) : ${roomMode}</p>
+      <p> 計費價格(byte${roomInit.roomPrice}) : ${roomPrice / 10.0}</p>
+      <p> 房間人數(byte${roomInit.memberCount}) : ${memberCount}</p>
+      <p> 計費人數(byte${roomInit.roomFeeDeductors}) : ${roomFeeDeductors}</p>`)}
+      `
+
+    html += this.userInfo()
+    html += `</div></div> `
+    return html
+  }
+}
 
 let modeParser = {
   '16': Mode16Parser,
@@ -737,6 +798,7 @@ let modeParser = {
   '19': Mode19Parser,
   '20': Mode20Parser,
   '21': Mode21Parser,
+  '22': Mode21Parser,
   '48': Mode48Parser,
   '49': Mode49Parser,
   '50': Mode50Parser,

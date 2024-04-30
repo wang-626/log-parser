@@ -5,12 +5,14 @@ const byte2Name = {
   19: '改變USER資料',
   20: 'GET電表度數',
   21: 'GET單個電表資訊',
+  22: 'GET USER DATA',
   //上面傳送下面回應
   48: 'RSP Alive ACK',
   49: 'CTR_RSP_SYSTEM_INFO',
   50: 'RSP 讀取所有房間電表度數',
   51: 'RSP 單個電表詳細資料',
   52: 'RSP 重新RESET',
+  53: 'RSP USER DATA',
 }
 
 

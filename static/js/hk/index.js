@@ -29,6 +29,7 @@ readInput.addEventListener('change', (e) => {
     initialData = textSplit(e.target.result)
     addTable(initialData)
     addParsesEvent()
+    addDecEvent()
   };
   reader.readAsText(file);
 })
@@ -64,7 +65,12 @@ const addTable = (data) => {
     }
     if (modeParser[modeId] !== undefined) {
       const parse = new modeParser[modeId](textList)
-      html += '<tr>'
+      if (Number(modeId) >= 48) {
+        html += '<tr class="table-secondary">'
+      } else {
+        html += '<tr>'
+      }
+
       textList.forEach((v, i) => {
         if (i === 0) {
           html += `<td class='t${i} '>
@@ -200,24 +206,33 @@ const addParsesEvent = () => {
 const addDecEvent = () => {
   const btnnDecs = document.querySelectorAll('.dec-btn')
   btnnDecs.forEach((btnDec) => {
-    let isDec = true 
+    let isDec = true
     btnDec.addEventListener('click', (e) => {
       tds = btnDec.parentNode.parentElement.querySelectorAll("td")
-      for (i = modeIndex; i < dateLen; i++) {
+      for (i = modeIndex - 2; i < dateLen; i++) {
         td = tds[i]
-        if(isDec){
-          td.textContent = Number(td.textContent).toString(16).toUpperCase()
+        if (i === modeIndex) {
+          if (isDec) {
+            td.innerHTML = Number(td.textContent.slice(0,2)).toString(16).toUpperCase() +"<br>"+ td.textContent.slice(2)
+          }
+          else {
+            td.innerHTML = parseInt(td.textContent.slice(0,2), 16).toString() +"<br>"+ td.textContent.slice(2)
+          }
         }
-        else{
-          td.textContent = parseInt(td.textContent, 16).toString()
+        else {
+          if (isDec) {
+            td.textContent = Number(td.textContent).toString(16).toUpperCase()
+          }
+          else {
+            td.textContent = parseInt(td.textContent, 16).toString()
+          }
         }
-       
       }
       isDec = !isDec
-      if(isDec){
-        btnDec.textContent="DEC"
-      }else{
-        btnDec.textContent="hex"
+      if (isDec) {
+        btnDec.textContent = "DEC"
+      } else {
+        btnDec.textContent = "hex"
       }
     })
   })

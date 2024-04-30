@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
         crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link href="../cs/index.css" rel="stylesheet">
@@ -43,7 +44,7 @@
         </div>
 
         <div class="d-flex m-3">
-            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_LayerRoomAccess">
+            <button type="button" class="btn btn-primary  m-3 swal_btn" id="test_LayerRoomAccess">
                 Alive
             </button>
 
@@ -67,6 +68,10 @@
                 單個電錶詳細值
             </button>
 
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_RoomInfo">
+                取得房間資料
+            </button>
+
         </div>
 
         <div class="search d-flex m-3">
@@ -75,8 +80,8 @@
                 搜尋
             </button>
         </div>
-
-        <table class="table table-striped text-center text-nowrap">
+<!-- table-striped -->
+        <table class="table text-center text-nowrap">
             <thead class="thead">
             </thead>
             <tbody class="tbody"></tbody>
