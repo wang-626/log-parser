@@ -112,8 +112,9 @@ const ctrRspSystemInfo = {
   readerDeviceError: 3,
   powerMeterDeviceError:6,
   meterDeviceError:9,
-  newRecordCounter: 12,
-  recordReadPoint: 13,
+  MeterRelayError:12,
+  newRecordCounter: 15,
+  recordReadPoint: 16,
 }
 
 const ctrChangeRoomData = {

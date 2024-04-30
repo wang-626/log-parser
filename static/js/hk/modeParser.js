@@ -450,16 +450,20 @@ class Mode49Parser extends ModeParser {
       let readerError = []
       let powerMeterError = []
       let meterError = []
+      let MeterRelayError = []
       let readerByteIndex = ctrRspSystemInfo.readerDeviceError+startIndex
       let powerMeterByteIndex = ctrRspSystemInfo.powerMeterDeviceError+startIndex
       let meterByteIndex = ctrRspSystemInfo.meterDeviceError+startIndex
+      let MeterRelayByteIndex = ctrRspSystemInfo.MeterRelayError+startIndex
       let meterByte = parseInt(this.bytes[meterByteIndex], 10)
       let powerMeterByte = parseInt(this.bytes[ powerMeterByteIndex], 10)
       let readerByte = parseInt(this.bytes[readerByteIndex], 10)
+      let MeterRelayByte = parseInt(this.bytes[readerByteIndex], 10)
 
       let readerDevice = `reader ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
       let powerMeterDevice = `電錶 ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
       let meterDevice = `meter ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
+      let MeterRelay = `meter ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
 
       let id = 1+(2-startIndex)*8
       for(let bit = 0; bit< 8; bit++) {
@@ -472,23 +476,28 @@ class Mode49Parser extends ModeParser {
         if((meterByte>>bit)&1==1){
           meterError.push(id+bit)
         }
+        if((MeterRelayByte>>bit)&1==1){
+          MeterRelayError.push(id+bit)
+        }
       }
       let readerBit = byteToBitStr(readerByte)
       let meterBit = byteToBitStr(meterByte)
       let powerMeterBit = byteToBitStr(powerMeterByte)
+      let MeterRelayBit = byteToBitStr(MeterRelayByte)
       readerHtml += `<tr><td>${readerDevice}</td><td>${readerByteIndex}</td><td>${readerBit}</td><td>${readerError.reverse().join(', ')}</td></tr>`
       meterHtml += `<tr><td>${meterDevice}</td><td>${meterByteIndex}</td><td>${meterBit}</td><td>${meterError.reverse().join(', ')}</td></tr>`
       powerMeterHtml += `<tr><td>${powerMeterDevice}</td><td>${powerMeterByteIndex}</td><td>${powerMeterBit}</td><td>${powerMeterError.reverse().join(', ')}</td></tr>`
+      MeterRelayHtml += `<tr><td>${MeterRelay}</td><td>${MeterRelayByteIndex}</td><td>${MeterRelayBit}</td><td>${MeterRelayError.reverse().join(', ')}</td></tr>`
     
     }
-    html +=  readerHtml  + powerMeterHtml + meterHtml + `<tbody></table>`
+    html +=  readerHtml  + powerMeterHtml + meterHtml + MeterRelayHtml + `<tbody></table>`
     return html
   }
 
   RoomMode() {
     let html = `<div class="ms-3"><table class="table table-success table-striped">
     <thead><tr><th>狀態</th><th>meter_id</th><th>Bit</th><th>Byte</th><th>卡號</th><th>Byte</th><th>進出時間</th><th>Byte</th></tr><tbody>`
-    let curr = 14
+    let curr = 17
     for (let i = 0; i < 7; i++) {
       const status = this.bytes[curr] >> 7 
       const meter_id = this.bytes[curr] & 31
