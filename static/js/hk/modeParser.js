@@ -1,5 +1,13 @@
-const byteToBitStr = (byte)=>{
+const byteToBitStr = (byte) => {
   return Number(byte).toString(2).padStart(8, '0').replace(/(.{4})(.{4})/, "$1 $2")
+}
+
+function getRoomMode(byte) {
+  if (byte in roomModeHash) {
+    return roomModeHash[byte];
+  } else {
+    return roomModeHash['error'](byte);
+  }
 }
 
 
@@ -71,6 +79,12 @@ class ModeParser {
     return String(idCard).padStart(10, '0')
   }
 
+  DecimalNumber(hexArray) {
+    return hexArray.reduce((acc, curr) => {
+      return (acc << 8n) + BigInt(parseInt(curr, 10));
+    }, 0n);
+  }
+
   /**
    * 固定資訊
    * @param {Array} BIdCard 陣列4個
@@ -94,7 +108,7 @@ class ModeParser {
     // 使用 DataView 對字節數組進行解析並轉換為浮點數
     let dataView = new DataView(bytes.buffer);
     let float = dataView.getFloat32(0, true)
-    
+
     return float.toFixed(2);
   }
 
@@ -114,13 +128,17 @@ class ModeParser {
 class Mode16Parser extends ModeParser {
 
   createHtml() {
-    const byte3Dec = parseInt(this.bytes[3], 10);
-    const byte4Dec = parseInt(this.bytes[4], 10);
+    const readCount = parseInt(this.bytes[alive.readCount], 10);
+    const readCount2 = parseInt(this.bytes[alive.readCount + 1], 10);
 
     let html = `
       <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
-      <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> 上次已讀紀錄數量(byte3) : ${byte3Dec}</p><p> 驗證(byte4) : ${byte4Dec}</p>`)}
+      <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> 上次已讀紀錄數量(byte${alive.readCount}) : ${readCount}</p>
+      <p> 驗證(byte${alive.readCount + 1}) : ${readCount2}</p>
+      <p> 房間ID(byte${alive.room_id}) : ${this.bytes[alive.room_id]}</p>
+      <p> 命令1(byte${alive.cmd1}) : ${this.bytes[alive.cmd1]}</p>
+      <p> 命令2(byte${alive.cmd2}) : ${this.bytes[alive.cmd2]}</p>`)}
       `
 
     html += `</div></div> `
@@ -141,7 +159,7 @@ class Mode17Parser extends ModeParser {
   userInfo() {
     let html = `<table class="table table-success table-striped">
     <thead><tr><th>送電狀態</th><th>Byte</th><th>學號</th><th>Byte</th><th>卡號</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
-    let curr = 10
+    let curr = roomInit.roomFeeDeductors + 1
     for (let i = 0; i < 6; i++) {
       const mode = userModeHash[parseInt(this.bytes[curr], 10)]
       const modeByte = curr
@@ -149,7 +167,7 @@ class Mode17Parser extends ModeParser {
       const sid = this.Bstudent_id_to_str(this.bytes.slice(curr, curr + 4))
       const sidByte = `${curr} - ${curr + 3}`
       curr += 4
-      const uid = this.Bidcard_to_str(this.bytes.slice(curr, curr + 4))
+      const uid = this.DecimalNumber(this.bytes.slice(curr, curr + 4))
       const uidByte = `${curr} - ${curr + 3}`
       curr += 4
       const balance = this.Bbalance_to_str(this.bytes.slice(curr, curr + 4))
@@ -165,8 +183,10 @@ class Mode17Parser extends ModeParser {
     const meterId = parseInt(this.bytes[roomInit.meterId], 10);
     const packageIndex = parseInt(this.bytes[roomInit.packageIndex], 10);
     const systemMode = parseInt(this.bytes[roomInit.systemMode], 10);
-    const roomMode = parseInt(this.bytes[roomInit.roomMode], 10);
-    const roomPrice = parseInt(this.bytes[roomInit.roomPrice], 10);
+    const roomMode110 = parseInt(this.bytes[roomInit.roomMode110], 10);
+    const roomMode220 = parseInt(this.bytes[roomInit.roomMode220], 10);
+    const roomPrice110 = parseInt(this.bytes[roomInit.roomPrice110], 10);
+    const roomPrice220 = parseInt(this.bytes[roomInit.roomPrice220], 10);
     const memberCount = parseInt(this.bytes[roomInit.memberCount], 10);
     const roomFeeDeductors = parseInt(this.bytes[roomInit.roomFeeDeductors], 10);
 
@@ -179,8 +199,10 @@ class Mode17Parser extends ModeParser {
       <p>Meter ID : ${meterId}</p>
       <p> 封包號碼(byte${roomInit.packageIndex}) : ${packageIndex}</p>
       <p> 系統模式(byte${roomInit.systemMode}) : ${systemMode}</p>
-      <p> 房間模式(byte${roomInit.roomMode}) : ${roomMode}</p>
-      <p> 計費價格(byte${roomInit.roomPrice}) : ${roomPrice / 10.0}</p>
+      <p> 房間模式220(byte${roomInit.roomMode220}) : ${roomMode220}</p>
+      <p> 房間模式110(byte${roomInit.roomMode110}) : ${roomMode110}</p>
+      <p> 計費價格220(byte${roomInit.roomPrice220}) : ${roomPrice220 / 10.0}</p>
+      <p> 計費價格100(byte${roomInit.roomPrice110}) : ${roomPrice110 / 10.0}</p>
       <p> 房間人數(byte${roomInit.memberCount}) : ${memberCount}</p>
       <p> 計費人數(byte${roomInit.roomFeeDeductors}) : ${roomFeeDeductors}</p>`)}
       `
@@ -199,35 +221,50 @@ class Mode17Parser extends ModeParser {
  */
 class Mode18Parser extends ModeParser {
   /**
-   * - 8以後為住宿者資料共5個每個佔9byte，以8為範例
-   * - 8為模式
-   * - 9-12為UID
-   * - 13-16為餘額
+   * - 4以後為房間模式資料共23個每個佔4byte，以4為範例
+   * - 4為110模式
+   * - 5為220模式
+   * - 6為110價格
+   * - 7為220價格
   */
   roomInfo() {
     let html = `<table class="table table-success table-striped">
-    <thead><tr><th>memter ID</th><th>模式</th><th>Byte</th><th>費率</th><th>Byte</th></tr><tbody>`
+    <thead><tr><th>memter ID</th><th>110模式</th><th>Byte</th><th>220模式</th><th>Byte</th><th>110費率</th><th>Byte</th><th>220費率</th><th>Byte</th></tr><tbody>`
     let curr = 4
     for (let i = 0; i < 12; i++) {
-      const mode = parseInt(this.bytes[curr], 10)
-      const modeByte = curr
+      const mode110 = parseInt(this.bytes[curr], 10)
+      const mode110Byte = curr
       curr += 1
-      const price = parseInt(this.bytes[curr], 10) / 10
-      const priceByte = curr
+      const mode220 = parseInt(this.bytes[curr], 10)
+      const mode220Byte = curr
       curr += 1
-      html += `<tr><td>${i+1}</td><td>${mode}</td><td>${modeByte}</td><td>${price}</td><td>${priceByte}</td></tr>`
+      const price110 = parseInt(this.bytes[curr], 10) / 10
+      const price110Byte = curr
+      curr += 1
+      const price220 = parseInt(this.bytes[curr], 10) / 10
+      const price220Byte = curr
+      curr += 1
+      html += `<tr><td>${i + 1}</td><td>${mode110}</td><td>${mode110Byte}</td><td>${mode220}</td><td>${mode220Byte}</td>
+               <td>${price110}</td><td>${price110Byte}</td><td>${price220}</td><td>${price220Byte}</td></tr>`
     }
     html += `<tbody></table>`
     html += `<div class="ms-3"><table class="table table-success table-striped">
-    <thead><tr><th>memter ID</th><th>模式</th><th>Byte</th><th>費率</th><th>Byte</th></tr><tbody>`
+    <thead><tr><th>memter ID</th><th>110模式</th><th>Byte</th><th>220模式</th><th>Byte</th><th>110費率</th><th>Byte</th><th>220費率</th><th>Byte</th></tr><tbody>`
     for (let i = 0; i < 11; i++) {
-      const mode = parseInt(this.bytes[curr], 10)
-      const modeByte = curr
+      const mode110 = parseInt(this.bytes[curr], 10)
+      const mode110Byte = curr
       curr += 1
-      const price = parseInt(this.bytes[curr], 10) / 10
-      const priceByte = curr
+      const mode220 = parseInt(this.bytes[curr], 10)
+      const mode220Byte = curr
       curr += 1
-      html += `<tr><td>${12+i}</td><td>${mode}</td><td>${modeByte}</td><td>${price}</td><td>${priceByte}</td></tr>`
+      const price110 = parseInt(this.bytes[curr], 10) / 10
+      const price110Byte = curr
+      curr += 1
+      const price220 = parseInt(this.bytes[curr], 10) / 10
+      const price220Byte = curr
+      curr += 1
+      html += `<tr><td>${i + 12}</td><td>${mode110}</td><td>${mode110Byte}</td><td>${mode220}</td><td>${mode220Byte}</td>
+               <td>${price110}</td><td>${price110Byte}</td><td>${price220}</td><td>${price220Byte}</td></tr>`
     }
 
     html += `<tbody></table></div>`
@@ -329,104 +366,75 @@ class Mode21Parser extends ModeParser {
   }
 }
 
+class Mode23Parser extends ModeParser {
+
+  cmd() {
+    let html = `<table class="table table-success table-striped">
+    <thead><tr><th>命令參數</th><th>Bit</th><th>Byte</th></tr><tbody>`
+    let arg = this.bytes[ctrSetSystemHw.systemArg]
+
+    html += `<tr><td>${arg}</td><td>${byteToBitStr(arg)}</td><td>${ctrSetSystemHw.systemArg}</td></tr>`
+    html += `<tbody></table>`
+    return html
+  }
 
 
+  createHtml() {
+    let html = `
+        <div class="card position-absolute d-flex parser d-none" draggable="true"  id="parser${this.textList[0]}">
+        <button type="button" class="btn-close ms-aut3o btn-parser-close" aria-label="Close"></button>
+        <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p> 硬體命令:${this.textList[ctrSetSystemHw.systemCmd]}(byte${ctrSetSystemHw.systemCmd})</p>`)}
+        `
+    html += this.cmd()
+    return html
+  }
+}
 
 
 
 /**
- * Alive回傳系統訊和進出紀錄
+ * 初始化和設定房間回傳
  */
 class Mode48Parser extends ModeParser {
-  DeviceError() {
+  RoomStatus() {
     let html = `<table class="table table-success table-striped">
-    <thead><tr><th>設備名稱</th><th>Byte</th><th>bit</th><th>錯誤</th></tr><tbody>`
-    let readerHtml = ""
-    let powerMeterHtml = ""
-    let meterHtml = ""
-
-    for (let startIndex = 0; startIndex < 3; startIndex++) {
-      let readerError = []
-      let powerMeterError = []
-      let meterError = []
-      let readerByteIndex = ctrRspSystemInfo.readerDeviceError+startIndex
-      let powerMeterByteIndex = ctrRspSystemInfo.powerMeterDeviceError+startIndex
-      let meterByteIndex = ctrRspSystemInfo.meterDeviceError+startIndex
-      let meterByte = parseInt(this.bytes[meterByteIndex], 10)
-      let powerMeterByte = parseInt(this.bytes[ powerMeterByteIndex], 10)
-      let readerByte = parseInt(this.bytes[readerByteIndex], 10)
-
-      let readerDevice = `reader ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
-      let powerMeterDevice = `電錶 ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
-      let meterDevice = `meter ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
-
-      let id = 1+(2-startIndex)*8
-      for(let bit = 0; bit< 8; bit++) {
-        if((readerByte>>bit)&1==1){
-          readerError.push(id+bit)
-        }
-        if((powerMeterByte>>bit)&1==1){
-          powerMeterError.push(id+bit)
-        }
-        if((meterByte>>bit)&1==1){
-          meterError.push(id+bit)
-        }
-      }
-      let readerBit = byteToBitStr(readerByte)
-      let meterBit = byteToBitStr(meterByte)
-      let powerMeterBit = byteToBitStr(powerMeterByte)
-      readerHtml += `<tr><td>${readerDevice}</td><td>${readerByteIndex}</td><td>${readerBit}</td><td>${readerError.reverse().join(', ')}</td></tr>`
-      meterHtml += `<tr><td>${meterDevice}</td><td>${meterByteIndex}</td><td>${meterBit}</td><td>${meterError.reverse().join(', ')}</td></tr>`
-      powerMeterHtml += `<tr><td>${powerMeterDevice}</td><td>${powerMeterByteIndex}</td><td>${powerMeterBit}</td><td>${powerMeterError.reverse().join(', ')}</td></tr>`
-    
+    <thead><tr><th></th>`
+    for (let room = 0; room < maxRoom; room++) {
+      html += `<th>Room ${room + 1}</th>`
     }
-    html +=  readerHtml  + powerMeterHtml + meterHtml + `<tbody></table>`
-    return html
-  }
+    html += `</tr><tbody>`
 
-  userAccessRecord() {
-    let html = `<div class="ms-3"><table class="table table-success table-striped">
-    <thead><tr><th>狀態</th><th>meter_id</th><th>Bit</th><th>Byte</th><th>卡號</th><th>Byte</th><th>進出時間</th><th>Byte</th></tr><tbody>`
-    let curr = 14
-    for (let i = 0; i < 7; i++) {
-      const status = this.bytes[curr] >> 7 
-      const meter_id = this.bytes[curr] & 31
-      const statusByte = curr
-      const statusBit = byteToBitStr(this.bytes[curr])
-      curr += 1
-      const uid = this.Bidcard_to_str(this.bytes.slice(curr, curr + 4))
-      const uidByte = `${curr} - ${curr + 3}`
-      curr += 4
-      let year = "20" + this.bytes[curr]
-      let month = this.bytes[curr+1].padStart(2, '0')
-      let day = this.bytes[curr+2]
-      let hour = this.bytes[curr+3]
-      let minute = this.bytes[curr+4]
-      let second = this.bytes[curr+5]
-      const time =`${year}-${month}-${day} ${hour}:${minute}:${second}`
-      const timeByte = `${curr} - ${curr + 6}`
-      curr += 6
-      html += `<tr><td>${status}</td><td>${meter_id}</td><td>${statusBit}</td><td>${statusByte}</td><td>${uid}</td><td>${uidByte}</td><td>${time}</td><td>${timeByte}</td></tr>`
+    let roomStatusHtml = "<tr><td>RoomStatus</td>"
+    let roomMode110Html = "<tr><td>RoomMode110</td>"
+    let roomMode220Html = "<tr><td>RoomMode220</td>"
+
+    for (let startIndex = 0; startIndex < maxRoom; startIndex++) {
+      let roomStatusIndex = ctrRsp.roomStatus + startIndex
+      let roomMode110eIndex = ctrRsp.roomMode110 + startIndex
+      let roomMode220Index = ctrRsp.roomMode220 + startIndex
+      let roomStatusByte = parseInt(this.bytes[roomStatusIndex], 10)
+      let roomMode110Byte = parseInt(this.bytes[roomMode110eIndex], 10)
+      let roomMode220Byte = parseInt(this.bytes[roomMode220Index], 10)
+
+      roomStatusHtml += `<td>Byte${roomStatusIndex}<br>${roomStatusByte}</td>`
+      roomMode110Html += `<td>Byte${roomMode110eIndex}<br>${getRoomMode(roomMode110Byte)}</td>`
+      roomMode220Html += `<td>Byte${roomMode220Index}<br>${getRoomMode(roomMode220Byte)}</td>`
     }
-    html += `<tbody></table></div>`
+    roomStatusHtml += `</tr>`
+    roomMode110Html += `</tr>`
+    roomMode220Html += `</tr>`
+    html += roomStatusHtml + roomMode220Html + roomMode110Html + `<tbody></table>`
     return html
   }
 
   createHtml() {
-    const newRecordCounter = parseInt(this.bytes[ctrRspSystemInfo.newRecordCounter], 10);
-    const recordReadPoint = parseInt(this.bytes[ctrRspSystemInfo.recordReadPoint], 10);
-
-
     let html = `
       <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
       <div class="card-body d-flex text-nowrap">
-      ${this.titleHtml(`
-      <p> 未讀取紀錄數量(byte${ctrRspSystemInfo.newRecordCounter}) : ${newRecordCounter}</p>
-      <p> 資料於Ring中的起始位置(byte${ctrRspSystemInfo.recordReadPoint}) : ${recordReadPoint}</p>`)}
+      ${this.titleHtml(``)}
       `
-    html += this.DeviceError()
-    html += this.userAccessRecord()
+    html += this.RoomStatus()
     html += `</div></div> `
     return html
   }
@@ -443,77 +451,88 @@ class Mode49Parser extends ModeParser {
     let html = `<table class="table table-success table-striped">
     <thead><tr><th>設備名稱</th><th>Byte</th><th>bit</th><th>錯誤</th></tr><tbody>`
     let readerHtml = ""
-    let powerMeterHtml = ""
+    let powerMeter110Html = ""
+    let powerMeter220Html = ""
     let meterHtml = ""
+    let meterRelayHtml = ""
 
     for (let startIndex = 0; startIndex < 3; startIndex++) {
       let readerError = []
-      let powerMeterError = []
+      let powerMeter110Error = []
+      let powerMeter220Error = []
       let meterError = []
-      let MeterRelayError = []
-      let readerByteIndex = ctrRspSystemInfo.readerDeviceError+startIndex
-      let powerMeterByteIndex = ctrRspSystemInfo.powerMeterDeviceError+startIndex
-      let meterByteIndex = ctrRspSystemInfo.meterDeviceError+startIndex
-      let MeterRelayByteIndex = ctrRspSystemInfo.MeterRelayError+startIndex
+      let meterRelayError = []
+      let readerByteIndex = ctrRspSystemInfo.readerError + startIndex
+      let powerMeter110ByteIndex = ctrRspSystemInfo.powerMeter110Error + startIndex
+      let powerMeter220ByteIndex = ctrRspSystemInfo.powerMeter220Error + startIndex
+      let meterByteIndex = ctrRspSystemInfo.meterError + startIndex
+      let meterRelayByteIndex = ctrRspSystemInfo.meterRelayError + startIndex
       let meterByte = parseInt(this.bytes[meterByteIndex], 10)
-      let powerMeterByte = parseInt(this.bytes[ powerMeterByteIndex], 10)
+      let powerMeter110Byte = parseInt(this.bytes[powerMeter110ByteIndex], 10)
+      let powerMeter220Byte = parseInt(this.bytes[powerMeter220ByteIndex], 10)
       let readerByte = parseInt(this.bytes[readerByteIndex], 10)
-      let MeterRelayByte = parseInt(this.bytes[readerByteIndex], 10)
+      let meterRelayByte = parseInt(this.bytes[readerByteIndex], 10)
 
-      let readerDevice = `reader ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
-      let powerMeterDevice = `電錶 ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
-      let meterDevice = `meter ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
-      let MeterRelay = `meter ${(3-startIndex)*8}~${1+(2-startIndex)*8}`
+      let reader = `reader ${(3 - startIndex) * 8}~${1 + (2 - startIndex) * 8}`
+      let powerMeter110 = `電錶110 ${(3 - startIndex) * 8}~${1 + (2 - startIndex) * 8}`
+      let powerMeter220 = `電錶220 ${(3 - startIndex) * 8}~${1 + (2 - startIndex) * 8}`
+      let meter = `meter ${(3 - startIndex) * 8}~${1 + (2 - startIndex) * 8}`
+      let meterRelay = `meter ${(3 - startIndex) * 8}~${1 + (2 - startIndex) * 8}`
 
-      let id = 1+(2-startIndex)*8
-      for(let bit = 0; bit< 8; bit++) {
-        if((readerByte>>bit)&1==1){
-          readerError.push(id+bit)
+      let id = 1 + (2 - startIndex) * 8
+      for (let bit = 0; bit < 8; bit++) {
+        if ((readerByte >> bit) & 1 == 1) {
+          readerError.push(id + bit)
         }
-        if((powerMeterByte>>bit)&1==1){
-          powerMeterError.push(id+bit)
+        if ((powerMeter110Byte >> bit) & 1 == 1) {
+          powerMeter110Error.push(id + bit)
         }
-        if((meterByte>>bit)&1==1){
-          meterError.push(id+bit)
+        if ((powerMeter220Byte >> bit) & 1 == 1) {
+          powerMeter220Error.push(id + bit)
         }
-        if((MeterRelayByte>>bit)&1==1){
-          MeterRelayError.push(id+bit)
+        if ((meterByte >> bit) & 1 == 1) {
+          meterError.push(id + bit)
+        }
+        if ((meterRelayByte >> bit) & 1 == 1) {
+          meterRelayError.push(id + bit)
         }
       }
       let readerBit = byteToBitStr(readerByte)
       let meterBit = byteToBitStr(meterByte)
-      let powerMeterBit = byteToBitStr(powerMeterByte)
-      let MeterRelayBit = byteToBitStr(MeterRelayByte)
-      readerHtml += `<tr><td>${readerDevice}</td><td>${readerByteIndex}</td><td>${readerBit}</td><td>${readerError.reverse().join(', ')}</td></tr>`
-      meterHtml += `<tr><td>${meterDevice}</td><td>${meterByteIndex}</td><td>${meterBit}</td><td>${meterError.reverse().join(', ')}</td></tr>`
-      powerMeterHtml += `<tr><td>${powerMeterDevice}</td><td>${powerMeterByteIndex}</td><td>${powerMeterBit}</td><td>${powerMeterError.reverse().join(', ')}</td></tr>`
-      MeterRelayHtml += `<tr><td>${MeterRelay}</td><td>${MeterRelayByteIndex}</td><td>${MeterRelayBit}</td><td>${MeterRelayError.reverse().join(', ')}</td></tr>`
-    
+      let powerMeter110Bit = byteToBitStr(powerMeter110Byte)
+      let powerMeter220Bit = byteToBitStr(powerMeter220Byte)
+      let meterRelayBit = byteToBitStr(meterRelayByte)
+      readerHtml += `<tr><td>${reader}</td><td>${readerByteIndex}</td><td>${readerBit}</td><td>${readerError.reverse().join(', ')}</td></tr>`
+      meterHtml += `<tr><td>${meter}</td><td>${meterByteIndex}</td><td>${meterBit}</td><td>${meterError.reverse().join(', ')}</td></tr>`
+      powerMeter220Html += `<tr><td>${powerMeter220}</td><td>${powerMeter220ByteIndex}</td><td>${powerMeter220Bit}</td><td>${powerMeter220Error.reverse().join(', ')}</td></tr>`
+      powerMeter110Html += `<tr><td>${powerMeter110}</td><td>${powerMeter110ByteIndex}</td><td>${powerMeter110Bit}</td><td>${powerMeter110Error.reverse().join(', ')}</td></tr>`
+      meterRelayHtml += `<tr><td>${meterRelay}</td><td>${meterRelayByteIndex}</td><td>${meterRelayBit}</td><td>${meterRelayError.reverse().join(', ')}</td></tr>`
+
     }
-    html +=  readerHtml  + powerMeterHtml + meterHtml + MeterRelayHtml + `<tbody></table>`
+    html += readerHtml + powerMeter220Html + powerMeter110Html + meterHtml + meterRelayHtml + `<tbody></table>`
     return html
   }
 
   RoomMode() {
     let html = `<div class="ms-3"><table class="table table-success table-striped">
     <thead><tr><th>狀態</th><th>meter_id</th><th>Bit</th><th>Byte</th><th>卡號</th><th>Byte</th><th>進出時間</th><th>Byte</th></tr><tbody>`
-    let curr = 17
+    let curr = ctrRspSystemInfo.recordReadPoint + 1
     for (let i = 0; i < 7; i++) {
-      const status = this.bytes[curr] >> 7 
+      const status = this.bytes[curr] >> 7
       const meter_id = this.bytes[curr] & 31
       const statusByte = curr
       const statusBit = byteToBitStr(this.bytes[curr])
       curr += 1
-      const uid = this.Bidcard_to_str(this.bytes.slice(curr, curr + 4))
+      const uid = this.DecimalNumber(this.bytes.slice(curr, curr + 4))
       const uidByte = `${curr} - ${curr + 3}`
       curr += 4
       let year = "20" + this.bytes[curr]
-      let month = this.bytes[curr+1].padStart(2, '0')
-      let day = this.bytes[curr+2]
-      let hour = this.bytes[curr+3]
-      let minute = this.bytes[curr+4]
-      let second = this.bytes[curr+5]
-      const time =`${year}-${month}-${day} ${hour}:${minute}:${second}`
+      let month = this.bytes[curr + 1].padStart(2, '0')
+      let day = this.bytes[curr + 2]
+      let hour = this.bytes[curr + 3]
+      let minute = this.bytes[curr + 4]
+      let second = this.bytes[curr + 5]
+      const time = `${year}-${month}-${day} ${hour}:${minute}:${second}`
       const timeByte = `${curr} - ${curr + 6}`
       curr += 6
       html += `<tr><td>${status}</td><td>${meter_id}</td><td>${statusBit}</td><td>${statusByte}</td><td>${uid}</td><td>${uidByte}</td><td>${time}</td><td>${timeByte}</td></tr>`
@@ -557,11 +576,20 @@ class Mode50Parser extends ModeParser {
       <thead><tr><th>房間ID</th><th>110瓦特</th><th>byte</th></tr></thead><tbody>`
 
     let curr = 3
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 12; i++) {
       const watt110 = this.Bdegree_to_degree(this.bytes.slice(curr, curr + 4))
       const watt110byte = `${curr}-${curr + 3}`
       curr += 4
-      html += `<tr><td>${i + 1 + byte5Dec * 5}</td><td>${watt110}</td>
+      html += `<tr><td>${i + 1}</td><td>${watt110}</td>
+               <td>${watt110byte}</td></tr>`
+    }
+    html += `</tbody></table><table class="table table-success table-striped mx-2">
+      <thead><tr><th>房間ID</th><th>110瓦特</th><th>byte</th></tr></thead><tbody>`
+    for (let i = 0; i < 11; i++) {
+      const watt110 = this.Bdegree_to_degree(this.bytes.slice(curr, curr + 4))
+      const watt110byte = `${curr}-${curr + 3}`
+      curr += 4
+      html += `<tr><td>${i + 13}</td><td>${watt110}</td>
                <td>${watt110byte}</td></tr>`
     }
     html += '</tbody></table>'
@@ -590,91 +618,49 @@ class Mode50Parser extends ModeParser {
 class Mode51Parser extends ModeParser {
 
   /**
-   *  - 5-8 為 220瓦特
-   *  - 9-12 為 110瓦特
+   *  
   */
-  meterWatt() {
+  meter() {
     let html = `<table class="table table-success table-striped mx-2">
-      <thead><tr><th></th><th>watt</th><th>byte</th></tr></thead><tbody>`
+      <thead><tr><th></th><th使用總電度</th><th>電壓</th><th>電流</th><th>虛功率</th><th>有效功率</th><th>頻率</th><th>功率因子</th></tr></thead><tbody>`
+    const totalPower = parseInt(this.bytes.slice(ctrRspPowerData.totalPower, ctrRspPowerData.totalPower + 4).join(''), 10)
+    const meterValtage = parseInt(this.bytes.slice(ctrRspPowerData.meterValtage, ctrRspPowerData.meterValtage + 4).join(''), 10)
+    const meterCurrent = parseInt(this.bytes.slice(ctrRspPowerData.meterCurrent, ctrRspPowerData.meterCurrent + 4).join(''), 10)
+    const meterVA = parseInt(this.bytes.slice(ctrRspPowerData.meterVA, ctrRspPowerData.meterVA + 4).join(''), 10)
+    const meterActPower = parseInt(this.bytes.slice(ctrRspPowerData.meterActPower, ctrRspPowerData.meterActPower + 4).join(''), 10)
+    const meterFreq = parseInt(this.bytes.slice(ctrRspPowerData.meterFreq, ctrRspPowerData.meterFreq + 4).join(''), 10)
 
-    const watt220 = parseInt(this.bytes.slice(5, 9).join(''), 10)
-    const watt110 = parseInt(this.bytes.slice(9, 13).join(''), 10)
-    html += `<tr><td>220V</td><td>${watt220}</td><td>5-8</td></tr>
-             <tr><td>110V</td><td>${watt110}</td><td>9-12</td></tr>
+    html += `<tr>
+             <td>byte</td>
+             <td>${ctrRspPowerData.totalPower}~${ctrRspPowerData.totalPower + 3}</td>
+             <td>${ctrRspPowerData.meterValtage}~${ctrRspPowerData.meterValtage + 3}</td>
+             <td>${ctrRspPowerData.meterCurrent}~${ctrRspPowerData.meterCurrent + 3}</td>
+             <td>${ctrRspPowerData.meterVA}~${ctrRspPowerData.meterVA + 3}</td>
+             <td>${ctrRspPowerData.meterActPower}~${ctrRspPowerData.meterActPower + 3}</td>
+             <td>${ctrRspPowerData.meterFreq}~${ctrRspPowerData.meterFreq + 3}</td>
+             </tr>
+             `
+    html += `<tr><td></td><td>${totalPower}</td><td>${meterValtage}</td><td>${meterCurrent}</td><td>${meterVA}</td><td>${meterActPower}</td><td>${meterFreq}</td></tr>
              </tbody></table>`
 
     return html
   }
-
-  /**
-   *  - 13-16 為 220伏特
-   *  - 9-12 為 110伏特
-  */
-  meterVolt() {
-    let html = `<table class="table table-success table-striped mx-2">
-      <thead><tr><th></th><th>VOLT</th><th>byte</th></tr></thead><tbody>`
-
-    const volt220 = parseInt(this.bytes.slice(13, 17).join(''), 10)
-    const volt110 = parseInt(this.bytes.slice(17, 21).join(''), 10)
-    html += `<tr><td>220V</td><td>${volt220}</td><td>13-16</td></tr>
-             <tr><td>110V</td><td>${volt110}</td><td>17-20</td></tr>
-             </tbody></table>`
-    return html
-  }
-
-  /**
-   *  - 21-24 為 220電流
-   *  - 25-28 為 110電流
-  */
-  meterI() {
-    let html = `<table class="table table-success table-striped mx-2">
-      <thead><tr><th></th><th>電流</th><th>byte</th></tr></thead><tbody>`
-
-    const I220 = parseInt(this.bytes.slice(21, 25).join(''), 10)
-    const I110 = parseInt(this.bytes.slice(25, 29).join(''), 10)
-    html += `<tr><td>220V</td><td>${I220}</td><td>21-24</td></tr>
-             <tr><td>110V</td><td>${I110}</td><td>25-28</td></tr>
-             </tbody></table>`
-    return html
-  }
-
-
-  /**
-  *  - 29-30 為 220法拉
-  *  - 31-32 為 110法拉
- */
-  meterF() {
-    let html = `<table class="table table-success table-striped mx-2">
-      <thead><tr><th></th><th>法拉</th><th>byte</th></tr><tbody>`
-
-    const F220 = parseInt(this.bytes.slice(29, 31).join(''), 10)
-    const F110 = parseInt(this.bytes.slice(31, 33).join(''), 10)
-    html += `<tr><td>220V</td><td>${F220}</td><td>29-30</td></tr>
-             <tr><td>110V</td><td>${F110}</td><td>31-32</td></tr>
-             </tbody></table>`
-    return html
-  }
-
 
   createHtml() {
-    const byte4Dec = parseInt(this.bytes[4], 10);
+    const meterId = parseInt(this.bytes[ctrRspPowerData.meterId], 10);
 
     let html = `
         <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
         <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
-        <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p>MeterID(Byte4) : ${byte4Dec}</p>`)}
+        <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p>MeterID(Byte${ctrRspPowerData.meterId}) : ${meterId}</p>`)}
         `
 
-    html += this.meterWatt()
-    html += this.meterVolt()
-    html += this.meterI()
-    html += this.meterF()
+    html += this.meter()
     html += `</div></div> `
 
     return html
   }
 }
-
 
 /**
  * RSP 用電紀錄
@@ -808,6 +794,7 @@ let modeParser = {
   '20': Mode20Parser,
   '21': Mode21Parser,
   '22': Mode21Parser,
+  '23': Mode23Parser,
   '48': Mode48Parser,
   '49': Mode49Parser,
   '50': Mode50Parser,

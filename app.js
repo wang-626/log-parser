@@ -26,8 +26,8 @@ app.get('/hk-old', (req, res) => {
 
 app.post('/command', (req, res) => {
 
-  const file = req.body.file;
-  const command = process.env.PYTHON_COMMAND + file + " -p " + process.env.COM_PORT
+  const cmd = req.body.cmd;
+  const command = process.env.PYTHON_COMMAND + cmd + " -p " + process.env.COM_PORT
 
   exec(command , (error, stdout, stderr) => {
     if (error) {
@@ -46,4 +46,5 @@ app.post('/command', (req, res) => {
   });
 });
 
+console.log(`server run in http://127.0.0.1:${process.env.WEB_PORT}`);
 app.listen(process.env.WEB_PORT);

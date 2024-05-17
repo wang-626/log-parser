@@ -30,9 +30,13 @@
         </div>
 
         <div class="d-flex m-3">
-            <button type="button" class="btn btn-primary m-3" data-bs-toggle="modal" data-bs-target="#Modal">
+            <div class="m-3">
+                <label for="meter-id">送出命令的meter ID</label>
+                <input id="meter-id" type="number" value=1>
+            </div>
+            <!-- <button type="button" class="btn btn-primary m-3" data-bs-toggle="modal" data-bs-target="#Modal">
                 欄位顯示
-            </button>
+            </button> -->
 
             <button type="button" class="btn btn-primary m-3 add-search">
                 新增搜尋條件
@@ -43,8 +47,12 @@
             </div>
         </div>
 
+
         <div class="d-flex m-3">
-            <button type="button" class="btn btn-primary  m-3 swal_btn" id="test_LayerRoomAccess">
+
+
+
+            <button type="button" class="btn btn-primary  m-3 alive_btn" id="test_Alive">
                 Alive
             </button>
 
@@ -60,16 +68,28 @@
                 設定房間(全部)模式/費率
             </button>
 
-            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_LayerRoomDegree">
-                整層電錶值
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_LayerRoomDegree220">
+                整層電錶值220
             </button>
 
-            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_RoomPowerMeterData">
-                單個電錶詳細值
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_LayerRoomDegree110">
+                整層電錶值110
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_RoomPowerMeterData110">
+                單個電錶詳細值110
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3 command_btn" id="test_RoomPowerMeterData220">
+                單個電錶詳細值220
             </button>
 
             <button type="button" class="btn btn-primary  m-3 command_btn" id="test_RoomInfo">
                 取得房間資料
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3 hardware_set_btn" id="test_SetHardwareCmd">
+                硬體設定
             </button>
 
         </div>
@@ -80,7 +100,7 @@
                 搜尋
             </button>
         </div>
-<!-- table-striped -->
+        <!-- table-striped -->
         <table class="table text-center text-nowrap">
             <thead class="thead">
             </thead>

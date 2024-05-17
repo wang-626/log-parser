@@ -1,12 +1,12 @@
 class Table {
   constructor() {
-    this.theadhName = { 1: 'CenterId', 2:'mode' , 3: 'MeterId' };
+    this.theadhName = { 1: 'CenterId', 2:'mode' };
   }
 }
 
 class Table1A {
   constructor() {
-    this.theadhName = { 1: 'mode', 2: 'CenterId', 3: 'MeterId' };
+    this.theadhName = { 1: 'mode', 2: 'CenterId' };
   }
 }
 
