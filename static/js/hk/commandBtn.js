@@ -3,7 +3,7 @@ const meter = document.querySelector("#meter-id");
 const PORT = location.port || 3000
 command_btns.forEach((btn) => {
   btn.addEventListener("click", () => {
-    fetchCommand(btn.id, True)
+    fetchCommand(btn.id, true)
   })
 })
 

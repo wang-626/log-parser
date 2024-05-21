@@ -1,3 +1,21 @@
+// const byte2Name = {
+//   16: '確認系統Alive',
+//   17: '房間初始化',
+//   18: 'SET房間模式費率',
+//   19: '改變USER資料',
+//   20: 'GET電表度數220',
+//   21: 'GET單個電表資訊220',
+//   22: 'GET USER DATA',
+//   23: '硬體控制(CTR_SET_SYSTEM_HW)',
+//   //上面傳送下面回應
+//   48: 'RSP ACK',
+//   49: 'CTR_RSP_SYSTEM_INFO',
+//   50: 'RSP 讀取所有房間電表度數',
+//   51: 'RSP 單個電表詳細資料',
+//   52: 'RSP USER DATA',
+//   53: 'RSP 重新RESET',
+// }
+
 const byte2Name = {
   16: '確認系統Alive',
   17: '房間初始化',
@@ -6,14 +24,18 @@ const byte2Name = {
   20: 'GET電表度數220',
   21: 'GET單個電表資訊220',
   22: 'GET USER DATA',
-  23: '硬體控制(CTR_SET_SYSTEM_HW)',
+  23: 'GET電表度數110',
+  24: 'GET單個電表資訊110',
+  25: '硬體控制(CTR_SET_SYSTEM_HW)',
   //上面傳送下面回應
   48: 'RSP ACK',
   49: 'CTR_RSP_SYSTEM_INFO',
-  50: 'RSP 讀取所有房間電表度數',
-  51: 'RSP 單個電表詳細資料',
-  52: 'RSP 重新RESET',
-  53: 'RSP USER DATA',
+  50: 'RSP 讀取所有房間220電表度數',
+  51: 'RSP 單個220電表詳細資料',
+  52: 'RSP USER DATA',
+  53: 'RSP 重新RESET',
+  54: 'RSP 讀取所有房間110電表度數',
+  55: 'RSP 單個110電表詳細資料',
 }
 
 
