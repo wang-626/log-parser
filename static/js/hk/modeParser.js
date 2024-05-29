@@ -620,6 +620,54 @@ class RspPower220Parser extends ModeParser {
   meterWatt() {
     const byte5Dec = parseInt(this.bytes[5], 10); // 第幾個封包
     let html = `<table class="table table-success table-striped mx-2">
+      <thead><tr><th>房間ID</th><th>220瓦特</th><th>byte</th></tr></thead><tbody>`
+
+    let curr = 3
+    for (let i = 0; i < 12; i++) {
+      const watt110 = this.Bdegree_to_degree(this.bytes.slice(curr, curr + 4))
+      const watt110byte = `${curr}-${curr + 3}`
+      curr += 4
+      html += `<tr><td>${i + 1}</td><td>${watt110}</td>
+               <td>${watt110byte}</td></tr>`
+    }
+    html += `</tbody></table><table class="table table-success table-striped mx-2">
+      <thead><tr><th>房間ID</th><th>220瓦特</th><th>byte</th></tr></thead><tbody>`
+    for (let i = 0; i < 11; i++) {
+      const watt110 = this.Bdegree_to_degree(this.bytes.slice(curr, curr + 4))
+      const watt110byte = `${curr}-${curr + 3}`
+      curr += 4
+      html += `<tr><td>${i + 13}</td><td>${watt110}</td>
+               <td>${watt110byte}</td></tr>`
+    }
+    html += '</tbody></table>'
+    return html
+  }
+
+  createHtml() {
+    const byte4Dec = parseInt(this.bytes[4], 10);
+    const byte5Dec = parseInt(this.bytes[5], 10);
+
+    let html = `
+      <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
+      <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
+      <div class="card-body d-flex text-nowrap">${this.titleHtml()}
+      `
+
+    html += this.meterWatt()
+    html += `</div></div> `
+    return html
+  }
+}
+
+class RspPower110Parser extends ModeParser {
+  /**
+   *  6之後每8個byte，以6為範例
+   *  - 6-9 為 220瓦特
+   *  - 10-13 為 110瓦特
+  */
+  meterWatt() {
+    const byte5Dec = parseInt(this.bytes[5], 10); // 第幾個封包
+    let html = `<table class="table table-success table-striped mx-2">
       <thead><tr><th>房間ID</th><th>110瓦特</th><th>byte</th></tr></thead><tbody>`
 
     let curr = 3
@@ -650,7 +698,7 @@ class RspPower220Parser extends ModeParser {
     let html = `
       <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
-      <div class="card-body d-flex text-nowrap">${this.titleHtml(`<p>Meter ID : ${byte4Dec}</p><p> 封包號碼(byte5) : ${byte5Dec}</p>`)}
+      <div class="card-body d-flex text-nowrap">${this.titleHtml()}
       `
 
     html += this.meterWatt()
@@ -658,7 +706,6 @@ class RspPower220Parser extends ModeParser {
     return html
   }
 }
-
 /**
  * RSP 讀取單個電表詳細資料
  */
@@ -850,4 +897,6 @@ let modeParser = {
   '50': RspPower220Parser,
   '51': RspPowerDetail220Parser,
   '52': RspUserDataParser,
+  '54': RspPowerDetail110Parser,
+  '55': RspPower110Parser,
 }
