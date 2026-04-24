@@ -8,15 +8,19 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
         crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link href="../cs/index.css" rel="stylesheet">
-    <script src="../js/ntut/type.js" defer> </script>
-    <script src="../js/ntut/index.js" defer> </script>
+    <script src="../js/knu/type.js" defer> </script>
+    <script src="../js/knu/move.js" defer> </script>
+    <script src="../js/knu/index.js" defer> </script>
     <script src="../js/init.js" defer> </script>
-    <script src="../js/ntut/modeParser.js" defer> </script>
-    <script src="../js/ntut/table.js" defer> </script>
-    <script src="../js/ntut/search.js" defer> </script>
+    <script src="../js/knu/modeParser.js" defer> </script>
+    <script src="../js/knu/table.js" defer> </script>
+    <script src="../js/knu/search.js" defer> </script>
+    <script src="../js/knu/commandBtn.js" defer> </script>
+    <script src="../js/ws.js" defer> </script>
 </head>
 
 <body>
@@ -26,10 +30,6 @@
         </div>
 
         <div class="d-flex m-3">
-            <button type="button" class="btn btn-primary m-3" data-bs-toggle="modal" data-bs-target="#Modal">
-                欄位顯示
-            </button>
-
             <button type="button" class="btn btn-primary m-3 add-search">
                 新增搜尋條件
             </button>
@@ -39,14 +39,32 @@
             </div>
         </div>
 
+
+        <div class="d-flex m-3">
+
+
+            <!-- <button type="button" class="btn btn-primary  m-3 get_reader_swipe_card_btn" id="test_GetReaderSwipeCard">
+                讀取刷卡紀錄
+            </button>
+
+            <button type="button" class="btn btn-primary  m-3 open_door_btn" id="test_OpenDoor">
+                開門
+            </button> -->
+
+            <button type="button" class="btn btn-primary  m-3 alive_btn" id="test_SetDisplayTxt">
+                顯示資料
+            </button>
+
+        </div>
+
         <div class="search d-flex m-3">
             <div class="div-condition d-flex"></div>
             <button type="button" class="btn btn-primary btn-search m-3">
                 搜尋
             </button>
         </div>
-
-        <table class="table table-striped text-center text-nowrap">
+        <!-- table-striped -->
+        <table class="table text-center text-nowrap">
             <thead class="thead">
             </thead>
             <tbody class="tbody"></tbody>

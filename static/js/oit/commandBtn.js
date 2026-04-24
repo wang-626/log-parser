@@ -3,6 +3,7 @@ const meter = document.querySelector("#meter-id");
 const center = document.querySelector("#center-id");
 const alive_btn = document.querySelector(".alive_btn");
 const hardware_set_btn = document.querySelector(".hardware_set_btn");
+
 const PORT = location.port || 3000
 
 let read_count = localStorage.getItem('read_count') || 0
