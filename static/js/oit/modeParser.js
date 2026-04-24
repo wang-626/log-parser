@@ -103,13 +103,20 @@ class ModeParser {
    * @param {Array} Bbalance 陣列4個
    */
   Bbalance_to_str(Bbalance) {
-    let bytes = new Uint8Array(Bbalance)
+    try {
+      let bytes = new Uint8Array(Bbalance)
 
-    // 使用 DataView 對字節數組進行解析並轉換為浮點數
-    let dataView = new DataView(bytes.buffer);
-    let float = dataView.getFloat32(0, true)
+      // 使用 DataView 對字節數組進行解析並轉換為浮點數
+      let dataView = new DataView(bytes.buffer);
+      let float = dataView.getFloat32(0, true)
 
-    return float.toFixed(2);
+      return float.toFixed(2);
+    }
+    catch {
+      return "轉換錯誤"
+    }
+
+
   }
 
 
@@ -161,7 +168,7 @@ class InitRoomParser extends ModeParser {
     <thead><tr><th>送電狀態</th><th>電權限</th><th>開門權限</th><th>管理員</th><th>bit</th><th>Byte</th><th>學號</th><th>Byte</th><th>卡號</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
     let curr = roomInit.roomFeeDeductors + 1
     for (let i = 0; i < 6; i++) {
-      const mode = Number(this.bytes[curr]) & 1 
+      const mode = Number(this.bytes[curr]) & 1
       const modeByteIndex = curr
       const modeBit = byteToBitStr(this.bytes[curr])
       const power = (Number(this.bytes[curr]) >> 5) & 1
@@ -607,7 +614,8 @@ class RspSystemInfoParser extends ModeParser {
       <div class="card-body d-flex text-nowrap">
       ${this.titleHtml(`
       <p> 未讀取紀錄數量(byte${ctrRspSystemInfo.newRecordCounter}) : ${newRecordCounter}</p>
-      <p> 資料於Ring中的起始位置(byte${ctrRspSystemInfo.recordReadPoint}) : ${recordReadPoint}</p>`)}
+      <p> 資料於Ring中的起始位置(byte${ctrRspSystemInfo.recordReadPoint}) : ${recordReadPoint}</p>
+      <input type="checkbox" id="isCardHex"/><label for="isCardHex">card hex</label>`)}
       `
     html += this.RoomStatus()
     html += this.RoomMode()
@@ -785,7 +793,7 @@ class RspUserDataParser extends ModeParser {
     <thead><tr><th>送電狀態</th><th>電權限</th><th>開門權限</th><th>管理員</th><th>bit</th><th>Byte</th><th>學號</th><th>Byte</th><th>卡號</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
     let curr = roomInit.roomFeeDeductors + 1
     for (let i = 0; i < 6; i++) {
-      const mode = Number(this.bytes[curr]) & 1 
+      const mode = Number(this.bytes[curr]) & 1
       const modeByteIndex = curr
       const modeBit = byteToBitStr(this.bytes[curr])
       const power = (Number(this.bytes[curr]) >> 5) & 1

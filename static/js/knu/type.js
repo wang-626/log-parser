@@ -193,4 +193,4 @@ const ctrSetSystemHw = {
 
 
 const maxRoom = 22
-const dateLen = 102
+const dateLen = 80

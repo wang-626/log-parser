@@ -3,9 +3,24 @@ const tbody = document.querySelector(".tbody")
 const tableChecks = document.querySelectorAll('.table-check')
 const btnSearch = document.querySelector('.btn-search')
 const countInput = document.querySelector('.count');
-let initialData = ''
-const modeIndex = 4
-// const dataLen = 58
+let initialData = []
+
+let modeIndex = null;
+for (const key in byteName) {
+  if (byteName.hasOwnProperty(key)) {
+    const element = byteName[key];
+    if (element.name === 'mode') {
+      modeIndex = Number(key) + 2;
+      break;
+    }
+  }
+}
+
+if (modeIndex == null) {
+  console.log("not found modeIndex");
+}
+
+
 
 readInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
@@ -14,25 +29,26 @@ readInput.addEventListener('change', (e) => {
     initialData = textSplit(e.target.result)
     addTable(initialData)
     addParsesEvent()
+    addDecEvent()
   };
   reader.readAsText(file);
 })
 
 
 const textSplit = (text) => {
-  const commaOnlyPattern = /^\d+(,\d+)*$/;
-  const commaSpacePattern = /^\d+(, \d+)*$/;
   texts = text.trim().split(/\r?\n/)
   texts = texts.map((line, i) => {
-    textList = [i + 1, line.slice(0, 19)]
-    if (commaOnlyPattern.test(line.slice(22))) {
-      textList = textList.concat(line.slice(22).split(','))
-    } else if (commaSpacePattern.test(line.slice(22))) {
-      textList = textList.concat(line.slice(22).split(', '))
+    const parts = line.split(" : ");
+    textList = [i + 1, parts[0]]
+    if (line.includes(',')) {
+      textList = textList.concat(parts[1].split(', '))
+    } else {
+      textList = textList.concat(parts[1].split(' '))
     }
-    textList[4] = textList[4] + '<br>' + byte2Name[textList[4]]
+    textList[4] = textList[4] + '<br>' + (byte2Name[textList[4]] || "")
     return textList
   })
+
   return texts
 }
 
@@ -40,10 +56,23 @@ const addTable = (data) => {
   let html = ''
   let count = -Number(countInput.value)
   data.slice(count).forEach(textList => {
-    let modeId = textList[modeIndex].slice(0, 2)
+    let modeId = 0
+    if (typeof (textList[modeIndex]) == String) {
+      modeId = textList[modeIndex].slice(0, 2)
+    }
+    else {
+      modeId = String(textList[modeIndex]).slice(0, 2)
+    }
+
+
     if (modeParser[modeId] !== undefined) {
       const parse = new modeParser[modeId](textList)
-      html += '<tr>'
+      if (Number(modeId) != 16) {
+        html += '<tr class="table-secondary">'
+      } else {
+        html += '<tr>'
+      }
+
       textList.forEach((v, i) => {
         if (i === 0) {
           html += `<td class='t${i} '>
@@ -51,18 +80,29 @@ const addTable = (data) => {
           <br>
           <button class="btn btn-primary parser-btn" type="button" id="parser-btn-${textList[0]}">
           解析
+          </button>
+          <button class="btn btn-primary dec-btn" type="button" id="dec-btn-${textList[0]}">
+          hex
           </button></td>`
         } else {
           html += `<td class='t${i}'>${v}</td> `
         }
       })
       html += '</tr><tr>'
-      html += `<td colspan="${dataLen}" class='hiddenRow'>${parse.createHtml()}</td>`
+      html += `<td colspan="${dateLen}" class='hiddenRow'>${parse.createHtml()}</td>`
       html += '</tr>'
     } else {
       html += '<tr>'
       textList.forEach((v, i) => {
-        html += `<td class='t${i}'>${v}</td>`
+        if (i === 0) {
+          html += `<td class='t${i} '>
+          ${v}
+          <button class="btn btn-primary dec-btn" type="button" id="dec-btn-${textList[0]}">
+          hex
+          </button></td>`
+        } else {
+          html += `<td class='t${i}'>${v}</td> `
+        }
       })
       html += '</tr>'
     }
@@ -94,16 +134,24 @@ btnSearch.addEventListener('click', (e) => {
     const conditionId = condition.id.slice(17)
     const conditionValue = document.querySelector(`#condition-value-${conditionId}`)
     let value = conditionValue.value.split(",") || [conditionValue.value]
-    if (byteConditionHash[condition.value]) {
-      byteConditionHash[condition.value] = byteConditionHash[condition.value].concat(value)
-    } else {
-      byteConditionHash[condition.value] = value
+
+    if (!byteConditionHash[condition.value]) {
+      byteConditionHash[condition.value] = { "isEqual": [], "isNotEqual": [] }
     }
+    value.forEach((v) => {
+      if (v.includes("!")) {
+        byteConditionHash[condition.value]["isNotEqual"].push(v.slice(1))
+      } else {
+        byteConditionHash[condition.value]["isEqual"].push(v)
+      }
+    })
 
   })
+
   let filterData = dataFilter(byteConditionHash)
   addTable(filterData)
   addParsesEvent()
+  addDecEvent()
 })
 
 
@@ -117,7 +165,12 @@ const dataFilter = (hash) => {
       const byteIndex = keysList[i]
       const DateByte = text[Number(byteIndex) + 2].slice(0, 2)
 
-      if (!hash[byteIndex].includes(DateByte)) {
+      if ((hash[byteIndex]["isEqual"].length !== 0) && !hash[byteIndex]["isEqual"].includes(DateByte)) {
+        result = false
+        break
+      }
+
+      if (hash[byteIndex]["isNotEqual"].includes(DateByte)) {
         result = false
         break
       }
@@ -145,10 +198,52 @@ const addParsesEvent = () => {
     })
   })
 
+
+
   const closeBtns = document.querySelectorAll('.btn-parser-close')
   closeBtns.forEach((closeBtn) => {
     closeBtn.addEventListener('click', (e) => {
       closeBtn.parentNode.classList.add('d-none')
+    })
+  })
+
+  const parses = document.querySelectorAll('.parser')
+  parses.forEach((parse) => {
+    parse.addEventListener('dragstart', startDragging);
+  })
+}
+
+const addDecEvent = () => {
+  const btnnDecs = document.querySelectorAll('.dec-btn')
+  btnnDecs.forEach((btnDec) => {
+    let isDec = true
+    btnDec.addEventListener('click', (e) => {
+      tds = btnDec.parentNode.parentElement.querySelectorAll("td")
+      for (i = modeIndex - 2; i < dateLen; i++) {
+        td = tds[i]
+        if (i === modeIndex) {
+          if (isDec) {
+            td.innerHTML = Number(td.textContent.slice(0,2)).toString(16).toUpperCase() +"<br>"+ td.textContent.slice(2)
+          }
+          else {
+            td.innerHTML = parseInt(td.textContent.slice(0,2), 16).toString() +"<br>"+ td.textContent.slice(2)
+          }
+        }
+        else {
+          if (isDec) {
+            td.textContent = Number(td.textContent).toString(16).toUpperCase()
+          }
+          else {
+            td.textContent = parseInt(td.textContent, 16).toString()
+          }
+        }
+      }
+      isDec = !isDec
+      if (isDec) {
+        btnDec.textContent = "DEC"
+      } else {
+        btnDec.textContent = "hex"
+      }
     })
   })
 }

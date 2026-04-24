@@ -3,6 +3,7 @@ const meter = document.querySelector("#meter-id");
 const center = document.querySelector("#center-id");
 const alive_btn = document.querySelector(".alive_btn");
 const hardware_set_btn = document.querySelector(".hardware_set_btn");
+
 const PORT = location.port || 3000
 
 let read_count = localStorage.getItem('read_count') || 0
@@ -20,35 +21,6 @@ meter.addEventListener("blur", (e) => {
 })
 center.addEventListener("blur", (e) => {
   localStorage.setItem('center_id', e.target.value)
-})
-
-
-alive_btn.addEventListener("click", () => {
-  Swal.fire({
-    title: '請輸入以讀取紀錄數量',
-    html: `
-    <div>
-    <input id="read_count" type="number" class="swal2-input" value=${read_count}>
-    </div>
-    <div class="m-3">
-    <label for="open_door">是否開門?</label>
-    <input id="open_door" type="checkbox">
-    </div>
-  `,
-    focusConfirm: false,
-    preConfirm: () => {
-      localStorage.setItem('read_count', document.getElementById("read_count").value);
-      read_count = document.getElementById("read_count").value
-      return [
-        document.getElementById("read_count").value,
-        document.getElementById("open_door").checked
-      ];
-    }
-  }).then((result) => {
-    if (result.value) {
-      fetchCommand('Alive', { r: Number(result.value[0]), open: result.value[1] })
-    }
-  })
 })
 
 hardware_set_btn.addEventListener("click", () => {
@@ -74,6 +46,32 @@ hardware_set_btn.addEventListener("click", () => {
   }).then((result) => {
     if (result.value) {
       fetchCommand('SetHardware', { c: Number(result.value[0]) || 0, a: Number(result.value[1]) || 0 })
+    }
+  })
+})
+
+alive_btn.addEventListener("click", () => {
+  Swal.fire({
+    title: '請輸入房間模式',
+    html: `
+    <div>
+    <label for="mode">命令</label>
+      <select name="mode" id="mode">
+        <option value="2">計費</option>
+        <option value="3">免費</option>
+        <option value="4">停用</option>
+      </select>
+    </div>
+  `,
+    focusConfirm: false,
+    preConfirm: () => {
+      return [
+        document.getElementById("mode").value,
+      ];
+    }
+  }).then((result) => {
+    if (result.value) {
+      fetchCommand(alive_btn.id.replace('test_', ''), { mode: Number(result.value[0]) || 0 })
     }
   })
 })

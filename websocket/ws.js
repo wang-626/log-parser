@@ -5,6 +5,18 @@ let connects = []
 // 建立 WebSocket 伺服器
 const wss = new WebSocket.Server({ port: 5000 });
 
+function nowTime() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function broadcast(data) {
+  const msg = typeof data === 'string' ? data : JSON.stringify(data);
+  connects = connects.filter(ws => ws.readyState === WebSocket.OPEN);
+  connects.forEach(ws => ws.send(msg));
+}
+
 const data_parse = (data) => {
   try {
     json_data = JSON.parse(data)
@@ -44,3 +56,5 @@ wss.on('connection', (ws) => {
 });
 
 console.log('WebSocket 伺服器已啟動，監聽埠號 5000...');
+
+module.exports = { broadcast, nowTime };

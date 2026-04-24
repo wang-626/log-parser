@@ -112,7 +112,6 @@ class ModeParser {
     return float.toFixed(2);
   }
 
-
   price_format(price) {
     if (price === 255 || price === '255') {
       return '不變'
@@ -150,69 +149,16 @@ class AliveParser extends ModeParser {
  * 設定房間名單
  */
 class InitRoomParser extends ModeParser {
-  /**
-   * - 10以後為住宿者資料共5個每個佔9byte，以8為範例
-   * - 8為模式
-   * - 9-12為UID
-   * - 13-16為餘額
-  */
-  userInfo() {
-    let html = `<table class="table table-success table-striped">
-    <thead><tr><th>送電狀態</th><th>電權限</th><th>開門權限</th><th>管理員</th><th>bit</th><th>Byte</th><th>學號</th><th>Byte</th><th>卡號</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
-    let curr = roomInit.roomFeeDeductors + 1
-    for (let i = 0; i < 6; i++) {
-      const mode = Number(this.bytes[curr]) & 1 
-      const modeByteIndex = curr
-      const modeBit = byteToBitStr(this.bytes[curr])
-      const power = (Number(this.bytes[curr]) >> 5) & 1
-      const door = (Number(this.bytes[curr]) >> 6) & 1
-      const is_super = (Number(this.bytes[curr]) >> 7) & 1
-
-      curr += 1
-      const sid = this.Bstudent_id_to_str(this.bytes.slice(curr, curr + 4))
-      const sidByte = `${curr} - ${curr + 3}`
-      curr += 4
-      const uid = this.DecimalNumber(this.bytes.slice(curr, curr + 4))
-      const uidByte = `${curr} - ${curr + 3}`
-      curr += 4
-      const balance = this.Bbalance_to_str(this.bytes.slice(curr, curr + 4))
-      const balanceByte = `${curr} - ${curr + 3}`
-      curr += 4
-      html += `<tr><td>${mode}</td><td>${power}</td><td>${door}</td><td>${is_super}</td><td>${modeBit}</td><td>${modeByteIndex}</td><td>${sid}</td><td>${sidByte}</td><td>${uid}</td><td>${uidByte}</td><td>${balance}</td><td>${balanceByte}</td></tr>`
-    }
-    html += `<tbody></table>`
-    return html
-  }
 
   createHtml() {
-    const meterId = parseInt(this.bytes[roomInit.meterId], 10);
-    const packageIndex = parseInt(this.bytes[roomInit.packageIndex], 10);
-    const systemMode = parseInt(this.bytes[roomInit.systemMode], 10);
-    const roomMode110 = parseInt(this.bytes[roomInit.roomMode110], 10);
-    const roomMode220 = parseInt(this.bytes[roomInit.roomMode220], 10);
-    const roomPrice110 = parseInt(this.bytes[roomInit.roomPrice110], 10);
-    const roomPrice220 = parseInt(this.bytes[roomInit.roomPrice220], 10);
-    const memberCount = parseInt(this.bytes[roomInit.memberCount], 10);
-    const roomFeeDeductors = parseInt(this.bytes[roomInit.roomFeeDeductors], 10);
-
+    const id_card = this.Bidcard_to_str(this.bytes.slice(9, 13))
 
     let html = `
       <div class="card position-absolute d-flex parser d-none" draggable="true" id="parser${this.textList[0]}">
       <button type="button" class="btn-close ms-auto btn-parser-close" aria-label="Close"></button>
       <div class="card-body d-flex text-nowrap">
-      ${this.titleHtml(`
-      <p>Meter ID : ${meterId}</p>
-      <p> 封包號碼(byte${roomInit.packageIndex}) : ${packageIndex}</p>
-      <p> 系統模式(byte${roomInit.systemMode}) : ${systemMode}</p>
-      <p> 房間模式220(byte${roomInit.roomMode220}) : ${roomMode220}</p>
-      <p> 房間模式110(byte${roomInit.roomMode110}) : ${roomMode110}</p>
-      <p> 計費價格220(byte${roomInit.roomPrice220}) : ${roomPrice220 / 10.0}</p>
-      <p> 計費價格100(byte${roomInit.roomPrice110}) : ${roomPrice110 / 10.0}</p>
-      <p> 房間人數(byte${roomInit.memberCount}) : ${memberCount}</p>
-      <p> 計費人數(byte${roomInit.roomFeeDeductors}) : ${roomFeeDeductors}</p>`)}
-      `
+      ${this.titleHtml(`<p>卡號byte(9-12) : ${id_card}</p>`)}`
 
-    html += this.userInfo()
     html += `</div></div> `
     return html
   }
@@ -785,7 +731,7 @@ class RspUserDataParser extends ModeParser {
     <thead><tr><th>送電狀態</th><th>電權限</th><th>開門權限</th><th>管理員</th><th>bit</th><th>Byte</th><th>學號</th><th>Byte</th><th>卡號</th><th>Byte</th><th>餘額</th><th>Byte</th></tr><tbody>`
     let curr = roomInit.roomFeeDeductors + 1
     for (let i = 0; i < 6; i++) {
-      const mode = Number(this.bytes[curr]) & 1 
+      const mode = Number(this.bytes[curr]) & 1
       const modeByteIndex = curr
       const modeBit = byteToBitStr(this.bytes[curr])
       const power = (Number(this.bytes[curr]) >> 5) & 1
@@ -901,21 +847,5 @@ class Mode53Parser extends ModeParser {
 }
 
 let modeParser = {
-  '16': AliveParser,
-  '17': InitRoomParser,
-  '18': SetRoomModeParser,
-  '19': ChangeUserDataParser,
-  '20': GetPower220Parser,
-  '21': GetPowerDetail220Parser,
-  '22': GetUserDataParser,
-  '23': GetPower110Parser,
-  '24': GetPowerDetail110Parser,
-  '25': SetSystemHw,
-  '48': RspAckParser,
-  '49': RspSystemInfoParser,
-  '50': RspPower220Parser,
-  '51': RspPowerDetail220Parser,
-  '52': RspUserDataParser,
-  '54': RspPowerDetail220Parser,
-  '55': RspPower110Parser,
+  '16': InitRoomParser,
 }

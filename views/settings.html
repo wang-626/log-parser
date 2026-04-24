@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>系統設定</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { background: #f8f9fa; }
+    .section-card { margin-bottom: 1.5rem; }
+    .table th { background: #e9ecef; }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <div class="d-flex align-items-center mb-4">
+    <h3 class="mb-0 me-3">系統設定</h3>
+    <a href="/" class="btn btn-sm btn-outline-secondary">返回首頁</a>
+  </div>
+
+  <ul class="nav nav-tabs mb-4" id="settingsTabs">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-general">一般設定</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rooms">房間管理</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-members">成員管理</button></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- ── 一般設定 ────────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="tab-general">
+      <div class="card section-card">
+        <div class="card-body">
+          <h5 class="card-title">一般設定</h5>
+          <form id="form-general" class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">付款方式 (PAYMENT_METHOD)</label>
+              <select class="form-select" name="payment_method">
+                <option value="EasyCard">EasyCard</option>
+                <option value="iPass">iPass</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">預設棟別 (DEFAULT_DONG)</label>
+              <input class="form-control" name="default_dong" placeholder="例：A">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">COM Port</label>
+              <div class="d-flex gap-2">
+                <select class="form-select" name="com_port" id="select-com-port">
+                  <option value="">-- 請選擇 --</option>
+                </select>
+                <button type="button" class="btn btn-outline-secondary text-nowrap" id="btn-detect-ports">偵測</button>
+              </div>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">儲存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ── 房間管理 ────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-rooms">
+      <div class="card section-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">房間管理</h5>
+            <button class="btn btn-sm btn-success" id="btn-add-room">新增房間</button>
+          </div>
+          <div class="mb-2">
+            <input class="form-control form-control-sm w-auto d-inline-block" id="room-filter" placeholder="篩選棟別…">
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm" id="table-rooms">
+              <thead>
+                <tr>
+                  <th>ID</th><th>名稱</th><th>棟別</th><th>Center</th><th>Meter</th>
+                  <th>樓層</th><th>系統模式</th><th>模式110</th><th>電費110</th><th>模式220</th><th>電費220</th><th>啟用</th><th>操作</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 成員管理 ────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-members">
+      <div class="card section-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">成員管理</h5>
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-success" id="btn-add-member">新增成員</button>
+              <button class="btn btn-sm btn-outline-success" id="btn-add-member-batch">批量新增</button>
+              <button class="btn btn-sm btn-outline-warning" id="btn-edit-member-batch">批量修改</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm" id="table-members">
+              <thead><tr><th><input type="checkbox" id="chk-all-members"></th><th>ID</th><th>學號</th><th>卡號</th><th>房號</th><th>餘額</th><th>電狀態</th><th>電權限</th><th>管理員</th><th>操作</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- tab-content -->
+</div><!-- container -->
+
+<!-- 批量新增成員 Modal -->
+<div class="modal fade" id="modal-batch-member" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">批量新增成員</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row align-items-center mb-3">
+          <label class="col-sm-2 col-form-label fw-bold">房號</label>
+          <div class="col-sm-4">
+            <input id="batch-room" class="form-control" placeholder="例：A101">
+          </div>
+        </div>
+        <table class="table table-sm table-bordered" id="batch-table">
+          <thead><tr><th style="width:45%">學號</th><th style="width:45%">卡號</th><th style="width:10%"></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-batch-add-row">＋ 加一行</button>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="btn-batch-submit">新增</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 批量修改成員 Modal -->
+<div class="modal fade" id="modal-batch-edit-member" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">批量修改房號</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row align-items-center mb-3">
+          <label class="col-sm-3 col-form-label fw-bold">新房號</label>
+          <div class="col-sm-5">
+            <input id="batch-edit-room" class="form-control" placeholder="例：A101">
+          </div>
+        </div>
+        <p class="text-muted small mb-1">將套用至以下成員：</p>
+        <ul id="batch-edit-member-list" class="list-group list-group-flush" style="max-height:260px;overflow-y:auto"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="btn-batch-edit-submit">儲存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const api = async (method, url, body) => {
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return res.json();
+};
+
+const toast = (icon, title) => Swal.fire({ toast: true, position: 'top-end', icon, title, showConfirmButton: false, timer: 1800 });
+
+// ── 一般設定 ─────────────────────────────────────────────────
+async function loadGeneral() {
+  const data = await api('GET', '/api/settings');
+  const form = document.getElementById('form-general');
+  if (data.payment_method) form.payment_method.value = data.payment_method;
+  if (data.default_dong)   form.default_dong.value   = data.default_dong;
+  if (data.com_port)       await populatePorts(data.com_port);
+}
+
+async function populatePorts(selectedPort = '') {
+  const select = document.getElementById('select-com-port');
+  const ports = await api('GET', '/api/settings/ports');
+  const current = selectedPort || select.value;
+  select.innerHTML = '<option value="">-- 請選擇 --</option>' +
+    ports.map(p => `<option value="${p.path}" ${p.path === current ? 'selected' : ''}>${p.path}${p.description ? ' — ' + p.description : ''}</option>`).join('');
+  if (current && !ports.find(p => p.path === current)) {
+    select.innerHTML += `<option value="${current}" selected>${current}</option>`;
+  }
+}
+
+document.getElementById('btn-detect-ports').addEventListener('click', () => populatePorts());
+
+document.getElementById('form-general').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  await api('PUT', '/api/settings', {
+    payment_method: form.payment_method.value,
+    default_dong:   form.default_dong.value,
+    com_port:       form.com_port.value,
+  });
+  toast('success', '已儲存');
+});
+
+
+// ── 房間管理 ─────────────────────────────────────────────────
+let allRooms = [];
+
+async function loadRooms() {
+  allRooms = await api('GET', '/api/settings/rooms');
+  renderRooms();
+}
+
+function renderRooms() {
+  const filter = document.getElementById('room-filter').value.trim().toLowerCase();
+  const rooms = filter ? allRooms.filter(r => String(r.dong).toLowerCase().includes(filter)) : allRooms;
+  const tbody = document.querySelector('#table-rooms tbody');
+  tbody.innerHTML = rooms.map(r => `
+    <tr>
+      <td>${r.id}</td><td>${r.name ?? ''}</td><td>${r.dong ?? ''}</td>
+      <td>${r.center_id}</td><td>${r.meter_id}</td><td>${r.floor ?? 1}</td>
+      <td>${r.system_mode ?? 0}</td><td>${r.mode ?? 0}</td><td>${r.price_degree ?? 0}</td>
+      <td>${r.mode_220 ?? 0}</td><td>${r.price_degree_220 ?? 0}</td>
+      <td>${r.enable ? '✔' : '✘'}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editRoom(${r.id})">編輯</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteRoom(${r.id})">刪除</button>
+      </td>
+    </tr>`).join('');
+}
+
+document.getElementById('room-filter').addEventListener('input', renderRooms);
+
+function roomFormHtml(r = {}) {
+  return `
+    <div class="row g-2 text-start">
+      <div class="col-6"><label class="form-label">名稱</label><input id="r_name" class="form-control" value="${r.name ?? ''}"></div>
+      <div class="col-6"><label class="form-label">棟別</label><input id="r_dong" class="form-control" value="${r.dong ?? ''}"></div>
+      <div class="col-4"><label class="form-label">Center ID</label><input id="r_center" class="form-control" type="number" value="${r.center_id ?? 1}"></div>
+      <div class="col-4"><label class="form-label">Meter ID</label><input id="r_meter" class="form-control" type="number" value="${r.meter_id ?? 1}"></div>
+      <div class="col-4"><label class="form-label">樓層</label><input id="r_floor" class="form-control" type="number" value="${r.floor ?? 1}"></div>
+      <div class="col-6"><label class="form-label">系統模式</label><input id="r_sysmode" class="form-control" type="number" value="${r.system_mode ?? 0}"></div>
+      <div class="col-6"><label class="form-label">模式110</label><input id="r_mode" class="form-control" type="number" value="${r.mode ?? 0}"></div>
+      <div class="col-6"><label class="form-label">電費110 (元/度)</label><input id="r_price" class="form-control" type="number" step="0.01" value="${r.price_degree ?? 0}"></div>
+      <div class="col-6"><label class="form-label">模式220</label><input id="r_mode220" class="form-control" type="number" value="${r.mode_220 ?? 0}"></div>
+      <div class="col-6"><label class="form-label">電費220 (元/度)</label><input id="r_price220" class="form-control" type="number" step="0.01" value="${r.price_degree_220 ?? 0}"></div>
+      <div class="col-12"><div class="form-check"><input id="r_enable" class="form-check-input" type="checkbox" ${(r.enable ?? 1) ? 'checked' : ''}><label class="form-check-label">啟用</label></div></div>
+    </div>`;
+}
+
+function roomFormValues() {
+  return {
+    system_mode:     Number(document.getElementById('r_sysmode').value),
+    name:            document.getElementById('r_name').value.trim(),
+    dong:            document.getElementById('r_dong').value.trim(),
+    center_id:       Number(document.getElementById('r_center').value),
+    meter_id:        Number(document.getElementById('r_meter').value),
+    floor:           Number(document.getElementById('r_floor').value),
+    mode:            Number(document.getElementById('r_mode').value),
+    price_degree:    Number(document.getElementById('r_price').value),
+    mode_220:        Number(document.getElementById('r_mode220').value),
+    price_degree_220:Number(document.getElementById('r_price220').value),
+    enable:          document.getElementById('r_enable').checked ? 1 : 0,
+  };
+}
+
+document.getElementById('btn-add-room').addEventListener('click', async () => {
+  const { value } = await Swal.fire({
+    title: '新增房間', html: roomFormHtml(), width: 600,
+    showCancelButton: true, confirmButtonText: '新增', cancelButtonText: '取消',
+    preConfirm: roomFormValues,
+  });
+  if (value) { await api('POST', '/api/settings/rooms', value); toast('success', '已新增'); loadRooms(); }
+});
+
+async function editRoom(id) {
+  const room = allRooms.find(r => r.id === id);
+  if (!room) return;
+  const { value } = await Swal.fire({
+    title: `編輯房間 #${id}`, html: roomFormHtml(room), width: 600,
+    showCancelButton: true, confirmButtonText: '儲存', cancelButtonText: '取消',
+    preConfirm: roomFormValues,
+  });
+  if (value) { await api('PUT', `/api/settings/rooms/${id}`, value); toast('success', '已儲存'); loadRooms(); }
+}
+
+async function deleteRoom(id) {
+  const confirmed = await Swal.fire({ title: `刪除房間 #${id}？`, icon: 'warning', showCancelButton: true, confirmButtonText: '刪除', cancelButtonText: '取消' });
+  if (confirmed.isConfirmed) { await api('DELETE', `/api/settings/rooms/${id}`); toast('success', '已刪除'); loadRooms(); }
+}
+
+// ── 成員管理 ─────────────────────────────────────────────────
+let allMembers = [];
+
+async function loadMembers() {
+  allMembers = await api('GET', '/api/settings/members');
+  document.getElementById('chk-all-members').checked = false;
+  const tbody = document.querySelector('#table-members tbody');
+  tbody.innerHTML = allMembers.map(m => `
+    <tr>
+      <td><input type="checkbox" class="chk-member" data-id="${m.id}"></td>
+      <td>${m.id}</td>
+      <td>${m.username ?? ''}</td>
+      <td>${m.id_card ?? ''}</td>
+      <td>${m.room_strings ?? ''}</td>
+      <td>${m.balance ?? 0}</td>
+      <td>${m.powerstatus ? '開' : '關'}</td>
+      <td>${m.can_control_power ? '有' : '無'}</td>
+      <td>${m.identity ? '是' : '否'}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editMember(${m.id})">編輯</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteMember(${m.id})">刪除</button>
+      </td>
+    </tr>`).join('');
+}
+
+document.getElementById('chk-all-members').addEventListener('change', function () {
+  document.querySelectorAll('.chk-member').forEach(c => c.checked = this.checked);
+});
+
+function memberFormHtml(m = {}) {
+  return `
+    <div class="row g-2 text-start">
+      <div class="col-6"><label class="form-label">學號</label><input id="m_username" class="form-control" value="${m.username ?? ''}"></div>
+      <div class="col-6"><label class="form-label">卡號</label><input id="m_id_card" class="form-control" value="${m.id_card ?? ''}"></div>
+      <div class="col-6"><label class="form-label">房號</label><input id="m_room" class="form-control" value="${m.room_strings ?? ''}"></div>
+      <div class="col-6"><label class="form-label">餘額</label><input id="m_balance" class="form-control" type="number" step="0.01" value="${m.balance ?? 0}"></div>
+      <div class="col-4"><div class="form-check mt-4"><input id="m_power" class="form-check-input" type="checkbox" ${m.powerstatus ? 'checked' : ''}><label class="form-check-label">電狀態（開）</label></div></div>
+      <div class="col-4"><div class="form-check mt-4"><input id="m_ctrl" class="form-check-input" type="checkbox" ${(m.can_control_power ?? 1) ? 'checked' : ''}><label class="form-check-label">電權限</label></div></div>
+      <div class="col-4"><div class="form-check mt-4"><input id="m_admin" class="form-check-input" type="checkbox" ${m.identity ? 'checked' : ''}><label class="form-check-label">管理員</label></div></div>
+    </div>`;
+}
+
+function memberFormValues() {
+  return {
+    username:         document.getElementById('m_username').value.trim(),
+    id_card:          document.getElementById('m_id_card').value.trim(),
+    room_strings:     document.getElementById('m_room').value.trim(),
+    balance:          Number(document.getElementById('m_balance').value),
+    powerstatus:      document.getElementById('m_power').checked ? 1 : 0,
+    can_control_power:document.getElementById('m_ctrl').checked ? 1 : 0,
+    identity:         document.getElementById('m_admin').checked ? 1 : 0,
+  };
+}
+
+document.getElementById('btn-add-member').addEventListener('click', async () => {
+  const { value } = await Swal.fire({
+    title: '新增成員', html: memberFormHtml(), width: 560,
+    showCancelButton: true, confirmButtonText: '新增', cancelButtonText: '取消',
+    preConfirm: memberFormValues,
+  });
+  if (value) { await api('POST', '/api/settings/members', value); toast('success', '已新增'); loadMembers(); }
+});
+
+async function editMember(id) {
+  const m = allMembers.find(x => x.id === id);
+  if (!m) return;
+  const { value } = await Swal.fire({
+    title: `編輯成員 #${id}`, html: memberFormHtml(m), width: 560,
+    showCancelButton: true, confirmButtonText: '儲存', cancelButtonText: '取消',
+    preConfirm: memberFormValues,
+  });
+  if (value) { await api('PUT', `/api/settings/members/${id}`, value); toast('success', '已儲存'); loadMembers(); }
+}
+
+async function deleteMember(id) {
+  const confirmed = await Swal.fire({ title: `刪除成員 #${id}？`, icon: 'warning', showCancelButton: true, confirmButtonText: '刪除', cancelButtonText: '取消' });
+  if (confirmed.isConfirmed) { await api('DELETE', `/api/settings/members/${id}`); toast('success', '已刪除'); loadMembers(); }
+}
+
+// ── 批量新增成員 ─────────────────────────────────────────────
+const batchModal = new bootstrap.Modal(document.getElementById('modal-batch-member'));
+
+function addBatchRow() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="form-control form-control-sm batch-username" placeholder="學號"></td>
+    <td><input class="form-control form-control-sm batch-idcard" placeholder="卡號"></td>
+    <td><button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
+  document.querySelector('#batch-table tbody').appendChild(tr);
+}
+
+document.getElementById('btn-batch-add-row').addEventListener('click', addBatchRow);
+
+document.getElementById('btn-add-member-batch').addEventListener('click', () => {
+  document.getElementById('batch-room').value = '';
+  document.querySelector('#batch-table tbody').innerHTML = '';
+  addBatchRow();
+  batchModal.show();
+});
+
+document.getElementById('btn-batch-submit').addEventListener('click', async () => {
+  const room_strings = document.getElementById('batch-room').value.trim();
+  if (!room_strings) { toast('warning', '請先輸入房號'); return; }
+
+  const members = [];
+  document.querySelectorAll('#batch-table tbody tr').forEach(tr => {
+    const username = tr.querySelector('.batch-username').value.trim();
+    const id_card  = tr.querySelector('.batch-idcard').value.trim();
+    if (username || id_card) members.push({ username, id_card });
+  });
+
+  if (members.length === 0) { toast('warning', '請至少填一筆資料'); return; }
+
+  await api('POST', '/api/settings/members/batch', { room_strings, members });
+  batchModal.hide();
+  toast('success', `已新增 ${members.length} 筆`);
+  loadMembers();
+});
+
+// ── 批量修改房號 ─────────────────────────────────────────────
+const batchEditModal = new bootstrap.Modal(document.getElementById('modal-batch-edit-member'));
+let batchEditIds = [];
+
+document.getElementById('btn-edit-member-batch').addEventListener('click', () => {
+  batchEditIds = [...document.querySelectorAll('.chk-member:checked')].map(c => Number(c.dataset.id));
+  if (batchEditIds.length === 0) { toast('warning', '請先勾選要修改的成員'); return; }
+
+  document.getElementById('batch-edit-room').value = '';
+  const selected = allMembers.filter(m => batchEditIds.includes(m.id));
+  document.getElementById('batch-edit-member-list').innerHTML = selected.map(m =>
+    `<li class="list-group-item py-1 small">${m.id} — ${m.username ?? ''} （目前：${m.room_strings ?? ''}）</li>`
+  ).join('');
+  batchEditModal.show();
+});
+
+document.getElementById('btn-batch-edit-submit').addEventListener('click', async () => {
+  const room_strings = document.getElementById('batch-edit-room').value.trim();
+  if (!room_strings) { toast('warning', '請輸入新房號'); return; }
+
+  const res = await api('PUT', '/api/settings/members/batch', { ids: batchEditIds, room_strings });
+  if (!res.ok) { toast('error', '更新失敗'); return; }
+  batchEditModal.hide();
+  toast('success', `已更新 ${res.count} 筆`);
+  loadMembers();
+});
+
+// ── 初始化 ───────────────────────────────────────────────────
+loadGeneral();
+document.querySelector('[data-bs-target="#tab-rooms"]').addEventListener('shown.bs.tab', loadRooms);
+document.querySelector('[data-bs-target="#tab-members"]').addEventListener('shown.bs.tab', loadMembers);
+</script>
+</body>
+</html>

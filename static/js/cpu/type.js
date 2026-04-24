@@ -1,41 +1,13 @@
-// const byte2Name = {
-//   16: '確認系統Alive',
-//   17: '房間初始化',
-//   18: 'SET房間模式費率',
-//   19: '改變USER資料',
-//   20: 'GET電表度數220',
-//   21: 'GET單個電表資訊220',
-//   22: 'GET USER DATA',
-//   23: '硬體控制(CTR_SET_SYSTEM_HW)',
-//   //上面傳送下面回應
-//   48: 'RSP ACK',
-//   49: 'CTR_RSP_SYSTEM_INFO',
-//   50: 'RSP 讀取所有房間電表度數',
-//   51: 'RSP 單個電表詳細資料',
-//   52: 'RSP USER DATA',
-//   53: 'RSP 重新RESET',
-// }
 
 const byte2Name = {
   16: '確認系統Alive',
-  17: '房間初始化',
-  18: 'SET房間模式費率',
-  19: '改變USER資料',
-  20: 'GET電表度數220',
-  21: 'GET單個電表資訊220',
-  22: 'GET USER DATA',
-  23: 'GET電表度數110',
-  24: 'GET單個電表資訊110',
-  25: '硬體控制(CTR_SET_SYSTEM_HW)',
+  27: 'GET單個電表資訊220',
+  18: '硬體控制(CTR_SET_SYSTEM_HW)',
   //上面傳送下面回應
   48: 'RSP ACK',
   49: 'CTR_RSP_SYSTEM_INFO',
-  50: 'RSP 讀取所有房間220電表度數',
-  51: 'RSP 單個220電表詳細資料',
-  52: 'RSP USER DATA',
+  50: 'RSP 單個220電表詳細資料',
   53: 'RSP 重新RESET',
-  54: 'RSP 讀取所有房間110電表度數',
-  55: 'RSP 單個110電表詳細資料',
 }
 
 
@@ -122,10 +94,8 @@ const systemHash = {
 
 const alive = {
   readCount: 5,
-  packageIndex: 4,
-  room_id:7,
-  cmd1: 8,
-  cmd2: 9,
+  cmd: 7,
+  cmdCheck: 8,
 }
 
 
@@ -150,25 +120,24 @@ const ctrRsp = {
 
 const ctrRspSystemInfo = {
   cmd: 2,
-  readerError: 3,
-  powerMeter220Error: 6,
-  powerMeter110Error: 9,
-  meterError: 12,
-  meterRelayError: 15,
-  newRecordCounter: 18,
-  recordReadPoint: 19,
+  powerMeterError: 3,
+  meterError: 7,
+  usingMeter: 8,
 }
 
 const ctrRspPowerData = {
-  meterId: 3,
+  meterId: 4,
+  mode: 5,
+  rate: 6,
+  powerOnOff: 7,
 
-  totalPower: 4,
-  meterValtage: 8,
-  meterCurrent: 12,
-  meterFreq: 16,
-  meterPowerFactor: 18,
-  meterVA: 20,
-  meterActPower: 24,
+  totalPower: 9,
+  meterValtage: 13,
+  meterCurrent: 17,
+  meterFreq: 21,
+  meterPowerFactor: 23,
+  meterVA: 25,
+  meterActPower: 30,
 }
 
 const getUser = {
